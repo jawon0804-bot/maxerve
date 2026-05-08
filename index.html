@@ -229,43 +229,50 @@
     }
 
     // 3. 백엔드(Google 시트) 전송
-    function submitToSheet() {
-        const worker = document.getElementById('worker-info').value;
-        const memo = document.getElementById('memo').value;
-        
-        // ⚠️ 주의: 아래 URL에 본인의 구글 웹 앱 URL을 반드시 넣으세요.
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
+function submitToSheet() {
+    const worker = document.getElementById('worker-info').value;
+    const memo = document.getElementById('memo').value;
+    const webAppUrl = "과장님의_웹앱_URL"; // 기존에 넣으신 URL 유지
 
-        // 현재 활성화된 섹션의 모든 데이터를 수집
-        const activeSection = document.querySelector('.section-content:not(.hidden)');
-        let detailData = [];
-        if(activeSection) {
-            const inputs = activeSection.querySelectorAll('input, select');
-            inputs.forEach(el => {
-                const label = el.parentElement.querySelector('label').innerText;
-                detailData.push(`[${label}: ${el.value}]`);
-            });
-        }
-
-        if(confirm("점검 데이터를 전송하시겠습니까?")) {
-            fetch(webAppUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    worker: worker,
-                    fId: fId,
-                    memo: memo,
-                    photoCount: photoCount,
-                    details: detailData.join(" ")
-                })
-            })
-            .then(() => {
-                alert("✅ 전송 완료! 시트를 확인해 주세요.");
-                location.reload();
-            })
-            .catch(err => alert("❌ 전송 실패: " + err));
-        }
+    const activeSection = document.querySelector('.section-content:not(.hidden)');
+    let detailData = [];
+    if(activeSection) {
+        const inputs = activeSection.querySelectorAll('input, select');
+        inputs.forEach(el => {
+            const label = el.parentElement.querySelector('label').innerText;
+            detailData.push(`[${label}: ${el.value}]`);
+        });
     }
+
+    if(confirm("점검 데이터와 사진을 전송하시겠습니까?")) {
+        // 전송 중 버튼 비활성화 (중복 클릭 방지)
+        const btn = document.querySelector('button[onclick="submitToSheet()"]');
+        btn.innerText = "전송 중... 잠시만 기다려주세요";
+        btn.disabled = true;
+
+        fetch(webAppUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                worker: worker,
+                fId: fId,
+                memo: memo,
+                photoCount: photoCount,
+                photoData: photoData, // ✨ 사진 파일들 전송 추가!
+                details: detailData.join(" ")
+            })
+        })
+        .then(() => {
+            alert("✅ 전송 완료! 시트와 드라이브를 확인해 주세요.");
+            location.reload();
+        })
+        .catch(err => {
+            alert("❌ 전송 실패: " + err);
+            btn.innerText = "점검 완료 및 전송";
+            btn.disabled = false;
+        });
+    }
+}
 </script>
 
 </body>
