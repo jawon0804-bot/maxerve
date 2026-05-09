@@ -50,6 +50,12 @@
         <!-- [전기설비 섹션] -->
         <div id="sec-전기_01" class="hidden section-content">
         <h2>1. 수변전 점검일지</h2>
+
+        <h3>점검표 기록 시간</h3>
+        <div class="item">
+            <label>⏰시간 설정</label>
+            <select name="time"><option value="null">Null / Empty</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
+        </div>    
            
         <h3>1. HV-4 MAIN VCB</h3>
           <div class="item"><label>전압 (KV)</label><input type="number" name="vcb_kv" placeholder=" HV-4 MAIN VCB_KV" required></div>
@@ -75,8 +81,14 @@
 
          <div id="sec-전기_02" class="hidden section-content">
         <h2>2. 수변전 점검일지</h2>
+
+        <h3>점검표 기록 시간</h3>
+        <div class="item">
+            <label>⏰시간 설정</label>
+            <select name="time"><option value="null">Null / Empty</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
+        </div>
         
-        <h3>4. TR1 [750KVA]</h3>
+        <h3>1. TR1 [750KVA]</h3>
         <div class="item"><label>온도 (℃)</label><input type="number" name="tr1_temp" placeholder="TR1_℃" required></div>
         <div class="item">
             <label>냄새</label>
@@ -87,7 +99,7 @@
             <select name="tr1_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
         </div>
 
-        <h3>5. TR2 [750KVA]</h3>
+        <h3>2. TR2 [750KVA]</h3>
         <div class="item"><label>온도 (℃)</label><input type="number" name="tr2_temp" placeholder="TR2_℃" required></div>
         <div class="item">
             <label>냄새</label>
@@ -98,7 +110,7 @@
             <select name="tr2_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
         </div>
 
-        <h3>6. LVR (정류기)</h3>
+        <h3>3. LVR (정류기)</h3>
         <div class="item"><label>AC_RS</label><input type="number" name="lvr_rs" placeholder="LVR_RS" required></div>
         <div class="item"><label>AC_ST</label><input type="number" name="lvr_st" placeholder="LVR_ST" required></div>
         <div class="item"><label>AC_TR</label><input type="number" name="lvr_tr" placeholder="LVR_TR" required></div>
@@ -109,7 +121,7 @@
             <select name="lvr_bat"><option value="양호">양호</option><option value="이상">이상</option></select>
         </div>
         
-        <h3>7. 검침현황 (밤 12시)</h3>
+        <h3>4. 검침현황 (밤 12시)</h3>
         <div class="item"><label>④ 현재 누적 주간 유효</label><input type="number" step="0.01" name="check_day" placeholder="소수점 두자리 까지" required></div>
         <div class="item"><label>⑤ 현재 누적 저녁 유효</label><input type="number" step="0.01" name="check_evening" placeholder="소수점 두자리 까지" required></div>
         <div class="item"><label>⑥ 현재 누적 심야 유효</label><input type="number" step="0.01" name="check_night" placeholder="소수점 두자리 까지" required></div>
@@ -153,7 +165,7 @@
 
         <!-- [공통: 사진 및 메모] -->
         <div id="common-footer">
-            <h2>📸 현장 사진 증빙</h2>
+            <h2>📸 현장 사진 촬영</h2>
             <div id="photo-preview-container"></div>
             <button type="button" class="btn-photo" onclick="addPhoto()">📷 사진 촬영 및 추가 (최대 4장)</button>
             
