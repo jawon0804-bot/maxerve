@@ -714,44 +714,47 @@ function removeSpecificPhoto(id, data) {
 function submitToSheet() {
     const worker = document.getElementById('worker-info').value;
     const memo = document.getElementById('memo').value;
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; // 기존에 넣으신 URL 유지
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec";
 
     const activeSection = document.querySelector('.section-content:not(.hidden)');
     let detailData = [];
+
     if(activeSection) {
         const inputs = activeSection.querySelectorAll('input, select');
         inputs.forEach(el => {
-            const label = el.parentElement.querySelector('label').innerText;
+            // ★ 안전장치: 라벨이 없는 경우를 대비합니다.
+            const parent = el.parentElement;
+            const labelEl = parent ? parent.querySelector('label') : null;
+            const label = labelEl ? labelEl.innerText.replace(':', '').trim() : "항목";
+            
             detailData.push(`[${label}: ${el.value}]`);
         });
     }
 
-    if(confirm("점검 데이터와 사진을 전송하시겠습니까?")) {
-        // 전송 중 버튼 비활성화 (중복 클릭 방지)
+    if(confirm("점검 데이터를 전송하시겠습니까?")) {
         const btn = document.querySelector('button[onclick="submitToSheet()"]');
         btn.innerText = "전송 중... 잠시만 기다려주세요";
         btn.disabled = true;
 
         fetch(webAppUrl, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'no-cors', 
             body: JSON.stringify({
                 worker: worker,
-                fId: fId,
+                fId: fId, // 전역 변수 fId 사용
                 memo: memo,
                 photoCount: photoCount,
-                photoData: photoData, // ✨ 사진 파일들 전송 추가!
-                // values: checkValues,
-                details: detailData.join(" ") // ✨ 모든 항목을 "한 줄의 긴 글자"로 뭉쳐서 보내는 방식
+                photoData: photoData,
+                details: detailData.join(" ") // 기존 방식 그대로!
             })
         })
         .then(() => {
-            alert("✅ 전송 완료! 시트와 드라이브를 확인해 주세요.");
+            alert("✅ 전송 완료!");
             location.reload();
         })
         .catch(err => {
-            alert("❌ 전송 실패: " + err);
-            btn.innerText = "점검 완료 및 전송";
+            alert("❌ 에러: " + err);
+            btn.innerText = "전송 실패 (다시 시도)";
             btn.disabled = false;
         });
     }
