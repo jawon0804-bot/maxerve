@@ -750,7 +750,7 @@ function submitToSheet() {
         })
         .then(() => {
             // 1. h2 태그의 내용을 가져옵니다. (설비명)
-            const facilityName = document.querySelector('h2').innerText;
+            const facilityName = document.querySelector('#header-area h2').innerText;
             // 2. 메시지에 설비명을 섞어서 보여줍니다.
             alert("✅ 전송 완료! " + facilityName + " 점검을 완료하였습니다.");
             location.reload();
