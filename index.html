@@ -749,12 +749,14 @@ function submitToSheet() {
             body: JSON.stringify(payload)
         })
         .then(() => {
-            // 1. h2 태그를 가져옵니다.
-            const h2Element = document.querySelector('h2');
-            // 2. 만약 h2가 있으면 그 안의 글자를 쓰고, 없으면 기본 문구를 씁니다.
-            // .trim()을 붙여서 이모티콘 주변의 불필요한 공백도 제거합니다.
-            const title = h2Element ? h2Element.innerText.trim() : "설비";
-            alert("✅ 전송 완료! " + title + " 점검을 완료하였습니다.");
+            // 1. 화면의 h2 태그에서 글자를 가져옵니다. 
+            // 만약 태그가 없으면 fId(설비ID)를 대신 사용합니다.
+            const h2Tag = document.querySelector('h2');
+            const safeName = h2Tag ? h2Tag.innerText.trim() : fId;
+
+            // 2. 위에서 만든 safeName을 사용하여 알림을 띄웁니다.
+            alert("✅ 전송 완료! " + safeName + " 점검을 완료 하였습니다!");
+            
             location.reload();
         })
         .catch(err => {
