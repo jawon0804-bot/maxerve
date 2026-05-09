@@ -590,7 +590,7 @@
 
         <!-- [공통: 사진 및 메모] -->
         <div id="common-footer">
-            <h2>📸 현장 사진 촬영</h2>
+            <h2>📸 현장 사진 (점검, 위험물, 파손 등)</h2>
             <div id="photo-preview-container"></div>
             <button type="button" class="btn-photo" onclick="addPhoto()">📷 사진 촬영 및 추가 (최대 4장)</button>
             
@@ -741,8 +741,8 @@ function submitToSheet() {
                 memo: memo,
                 photoCount: photoCount,
                 photoData: photoData, // ✨ 사진 파일들 전송 추가!
-                values: checkValues
-                //details: detailData.join(" ") ✨ 모든 항목을 "한 줄의 긴 글자"로 뭉쳐서 보내는 방식
+                values: checkValues,
+                details: detailData.join(" ") // ✨ 모든 항목을 "한 줄의 긴 글자"로 뭉쳐서 보내는 방식
             })
         })
         .then(() => {
