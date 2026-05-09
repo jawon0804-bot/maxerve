@@ -49,11 +49,11 @@
         
         <!-- [전기설비 섹션] -->
         <div id="sec-전기_01" class="hidden section-content">
-        <h2>1. 수변전 점검일지</h2>
+        <h2>⚡ 수변전설비 점검</h2>
 
-        <h3>점검표 기록 시간</h3>
+        <h3>⏰ 점검표 기록 시간</h3>
         <div class="item">
-            <label>⏰시간 설정</label>
+            <label>시간 설정</label>
             <select name="time"><option value="null">-</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
         </div>    
            
@@ -80,11 +80,11 @@
 </div>
 
          <div id="sec-전기_02" class="hidden section-content">
-        <h2>2. 수변전 점검일지</h2>
+        <h2>⚡ 수변전설비 점검</h2>
 
-        <h3>점검표 기록 시간</h3>
+        <h3>⏰점검표 기록 시간</h3>
         <div class="item">
-            <label>⏰시간 설정</label>
+            <label>시간 설정</label>
             <select name="time"><option value="null">-</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
         </div>
         
@@ -760,7 +760,7 @@ function submitToSheet() {
         } else {
         currentTitle = fId; // 혹시 섹션을 못 찾으면 설비ID라도!
         }
-            alert("✅ 전송 완료! " + currentTitle + " 점검을 완료 하였습니다.");
+            alert("✅ 전송 완료! " + currentTitle + "을 완료 하였습니다.");
             
             location.reload();
         })
