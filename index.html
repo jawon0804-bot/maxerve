@@ -749,13 +749,18 @@ function submitToSheet() {
             body: JSON.stringify(payload)
         })
         .then(() => {
-            // 1. 화면의 h2 태그에서 글자를 가져옵니다. 
-            // 만약 태그가 없으면 fId(설비ID)를 대신 사용합니다.
-            const h2Tag = document.querySelector('h2');
-            const safeName = h2Tag ? h2Tag.innerText.trim() : fId;
-
-            // 2. 위에서 만든 safeName을 사용하여 알림을 띄웁니다.
-            alert("✅ 전송 완료! " + safeName + " 점검을 완료 하였습니다!");
+        // 1. 현재 화면에 표시되고 있는(hidden이 아닌) 섹션을 먼저 찾습니다.
+        const activeSection = document.querySelector('.section-content:not(.hidden)');
+    
+        // 2. 그 활성화된 섹션 '안에 있는' h2 태그를 찾습니다.
+        let currentTitle = "";
+        if (activeSection) {
+            const h2 = activeSection.querySelector('h2');
+            currentTitle = h2 ? h2.innerText.trim() : fId;
+        } else {
+            currentTitle = fId; // 혹시 섹션을 못 찾으면 설비ID라도!
+        }
+            alert("✅ 전송 완료! " + currentTitle + " 점검을 완료 하였습니다!");
             
             location.reload();
         })
