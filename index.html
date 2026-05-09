@@ -716,18 +716,15 @@ function submitToSheet() {
     const memo = document.getElementById('memo').value;
     const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec";
 
+    // 1. 데이터 수집: 합치지 않고 '값'만 배열에 담습니다 (가장 빠름)
     const activeSection = document.querySelector('.section-content:not(.hidden)');
-    let detailData = [];
-
+    let checkValues = []; 
+    
     if(activeSection) {
         const inputs = activeSection.querySelectorAll('input, select');
         inputs.forEach(el => {
-            // ★ 안전장치: 라벨이 없는 경우를 대비합니다.
-            const parent = el.parentElement;
-            const labelEl = parent ? parent.querySelector('label') : null;
-            const label = labelEl ? labelEl.innerText.replace(':', '').trim() : "항목";
-            
-            detailData.push(`[${label}: ${el.value}]`);
+            // 값만 바로 넣으므로 계산 과정이 사라져 멈추지 않습니다.
+            checkValues.push(el.value || ""); 
         });
     }
 
@@ -736,24 +733,27 @@ function submitToSheet() {
         btn.innerText = "전송 중... 잠시만 기다려주세요";
         btn.disabled = true;
 
+        // 2. 전송 데이터 구성 (values 방식)
+        const payload = {
+            worker: worker,
+            fId: fId,
+            memo: memo,
+            photoCount: photoCount,
+            photoData: photoData,
+            values: checkValues // 목록 형태로 가볍게 전송!
+        };
+
         fetch(webAppUrl, {
             method: 'POST',
             mode: 'no-cors', 
-            body: JSON.stringify({
-                worker: worker,
-                fId: fId, // 전역 변수 fId 사용
-                memo: memo,
-                photoCount: photoCount,
-                photoData: photoData,
-                details: detailData.join(" ") // 기존 방식 그대로!
-            })
+            body: JSON.stringify(payload)
         })
         .then(() => {
-            alert("✅ 전송 완료!");
+            alert("✅ 전송 성공! 훨씬 빨라졌죠?");
             location.reload();
         })
         .catch(err => {
-            alert("❌ 에러: " + err);
+            alert("❌ 에러 발생: " + err);
             btn.innerText = "전송 실패 (다시 시도)";
             btn.disabled = false;
         });
