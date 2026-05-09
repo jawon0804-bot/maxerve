@@ -754,7 +754,7 @@ function submitToSheet() {
             // 2. 만약 h2가 있으면 그 안의 글자를 쓰고, 없으면 기본 문구를 씁니다.
             // .trim()을 붙여서 이모티콘 주변의 불필요한 공백도 제거합니다.
             const title = h2Element ? h2Element.innerText.trim() : "설비";
-            alert("✅ 전송 완료! " + facilityName + " 점검을 완료하였습니다.");
+            alert("✅ 전송 완료! " + title + " 점검을 완료하였습니다.");
             location.reload();
         })
         .catch(err => {
