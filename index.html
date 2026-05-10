@@ -676,11 +676,11 @@
 
     // [중요] 3. 상황에 따른 화면 전환
     if (!fId || fId === "" || fId === "null" || fId === null || fId === undefined) {
-    // [태그가 없는 경우] -> 안내 화면을 보여줍니다.
+        console.log("태그 없음 인식 -> 태그 화면 표시"); // 확인용
         document.getElementById('step-scan').classList.remove('hidden');
         document.getElementById('inspection-form').classList.add('hidden');
     } else {
-    // [태그가 있는 경우] -> 바로 점검표 양식을 보여줍니다.
+        console.log("태그 인식됨 -> " + fId); // 확인용
         document.getElementById('step-scan').classList.add('hidden');
         document.getElementById('inspection-form').classList.remove('hidden');
         
