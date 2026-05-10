@@ -687,12 +687,32 @@
     let rawFId = urlParams.get('fId') || urlParams.get('id') || "";
 
     // 한글 해독 및 공백 제거
+    function startInspection(name, phone) {
+    // 1. 인증창 숨기기
+    document.getElementById('step-auth').classList.add('hidden');
+
+    // 2. 태그 안내 화면(step-scan)에 이름 넣기
+    const welcomeName = document.querySelector('#step-scan h2');
+    if (welcomeName) {
+        welcomeName.innerText = "안녕하세요, " + name + " 님!";
+    }    
+    
+    // 3. 점검자 정보 표시
+    const workerDisplay = document.getElementById('display-worker');
+    if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
+
+    // [핵심 보강] 주소창에서 id 혹은 fId를 가져옵니다.
+    const urlParams = new URLSearchParams(window.location.search);
+    let rawFId = urlParams.get('fId') || urlParams.get('id') || "";
+
+    // 한글 해독 및 공백 제거 (이름을 fId로 통일합니다)
     let fId = decodeURIComponent(rawFId).trim();
 
-    console.log("인식된 설비 ID:", fId); // 이제 '기계_07'이 잘 찍힐 겁니다!
+    console.log("인식된 설비 ID:", fId);
 
     // 4. fId가 진짜 없을 때 (태그 안내 화면)
-    if (!currentFId || currentFId === "" || currentFId === "null" || currentFId === "undefined") {
+    // [수정] currentFId를 모두 fId로 바꿨습니다.
+    if (!fId || fId === "" || fId === "null" || fId === "undefined") {
         document.getElementById('step-scan').classList.remove('hidden');
         document.getElementById('inspection-form').classList.add('hidden');
     } 
@@ -705,19 +725,16 @@
         const allSections = document.querySelectorAll('.section-content');
         allSections.forEach(s => s.classList.add('hidden'));
 
-        // ID 매칭 (예: 'sec-' + '전기_01')
-        const targetId = 'sec-' + currentFId;
+        // ID 매칭 (예: 'sec-' + '기계_07')
+        const targetId = 'sec-' + fId;
         const targetSection = document.getElementById(targetId);
         
         if (targetSection) {
-            // 일치하는 설비를 찾았을 때
             targetSection.classList.remove('hidden');
-            document.getElementById('facility-title').innerText = "📋 " + currentFId + " 점검표";
+            document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
         } else {
-            // [현재 과장님이 겪는 상황] 글자는 가져왔는데 ID를 못 찾을 때
             if(allSections[0]) allSections[0].classList.remove('hidden');
-            // 확인을 위해 주소창에서 읽은 글자를 제목에 띄워줍니다.
-            document.getElementById('facility-title').innerText = "📋 미등록 설비 [" + currentFId + "]";
+            document.getElementById('facility-title').innerText = "📋 미등록 설비 [" + fId + "]";
         }
     }
 }
