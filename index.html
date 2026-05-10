@@ -597,92 +597,101 @@
     </form>
 
     <script>
-    <script>
-    // 1. 설정 및 전역 변수 (fId는 유연하게 let으로 선언)
+    // 1. 전역 변수 설정 (어디서든 쓸 수 있게 맨 위로!)
     let fId = ""; 
     let photoCount = 0;
     const photoData = [];
     
-    // 과장님의 실제 구글 스크립트 URL
+    // 과장님의 구글 앱스 스크립트 URL
     const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";    
     const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
 
-    // 2. 페이지 로드 시 실행 (가장 먼저 fId부터 뽑아냅니다)
+    // 2. 페이지가 켜지자마자 실행되는 로직
     window.onload = function() {
+        // 주소창에서 id 혹은 fId를 읽어옵니다.
         const urlParams = new URLSearchParams(window.location.search);
-        // id 혹은 fId 둘 다 읽어오고 한글 깨짐 방지 처리
         let rawId = urlParams.get('id') || urlParams.get('fId') || "";
         fId = decodeURIComponent(rawId).trim();
         
-        console.log("인식된 설비 ID:", fId);
+        console.log("인식된 설비:", fId);
 
+        // 로그인 정보가 있는지 확인 (자동 로그인)
         const savedName = localStorage.getItem('userName');
         const savedPhone = localStorage.getItem('userPhone');
 
         if (savedName && savedPhone) {
             startInspection(savedName, savedPhone);
         } else {
-            document.getElementById('step-auth').classList.remove('hidden');
+            // 정보 없으면 인증창 보여주기
+            const authStep = document.getElementById('step-auth');
+            if(authStep) authStep.classList.remove('hidden');
         }
     };
 
-    // 3. 인증 버튼 클릭 시 실행
+    // 3. [중요] 인증 버튼을 누를 때 실행되는 함수
     function handleLogin() {
-        const name = document.getElementById('loginName').value.trim();
-        const phone = document.getElementById('loginPhone').value.trim();
+        const nameInput = document.getElementById('loginName');
+        const phoneInput = document.getElementById('loginPhone');
+        
+        if(!nameInput || !phoneInput) return;
+
+        const name = nameInput.value.trim();
+        const phone = phoneInput.value.trim();
 
         if (!name || !phone) { 
             alert("성함과 번호를 입력해주세요."); 
             return; 
         }
 
-        // 로그인 정보 저장
+        // 로컬에 저장
         localStorage.setItem('userName', name);
         localStorage.setItem('userPhone', phone);
         
-        // 점검 시작 함수 호출
+        // 다음 단계로 이동
         startInspection(name, phone);
     }
 
-    // 4. 화면 전환 및 점검표 활성화 핵심 함수
+    // 4. [핵심] 화면 전환 및 점검표 활성화 함수
     function startInspection(name, phone) {
         // 인증창 숨기기
         const authStep = document.getElementById('step-auth');
         if (authStep) authStep.classList.add('hidden');
 
-        // 점검자 이름 표시
+        // 상단/하단에 점검자 이름 세팅
         const welcomeName = document.querySelector('#step-scan h2');
         if (welcomeName) welcomeName.innerText = "안녕하세요, " + name + " 님!";
         
         const workerDisplay = document.getElementById('display-worker');
         if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
 
-        // fId 상태에 따른 분기
-        if (!fId || fId === "" || fId === "null" || fId === "미등록설비") {
-            // 태그가 없으면 -> 스캔 대기 화면 표시
+        // 설비 ID 유무에 따라 화면 갈아끼우기
+        if (!fId || fId === "" || fId === "미등록설비") {
+            // ID가 없으면 '태그 스캔' 안내 화면
             document.getElementById('step-scan').classList.remove('hidden');
             document.getElementById('inspection-form').classList.add('hidden');
         } else {
-            // 태그가 있으면 -> 바로 점검표 표시
+            // ID가 있으면 바로 '점검표' 화면
             document.getElementById('step-scan').classList.add('hidden');
             document.getElementById('inspection-form').classList.remove('hidden');
             
+            // 모든 점검 섹션 숨기고 해당 섹션만 표시
             const allSections = document.querySelectorAll('.section-content');
             allSections.forEach(s => s.classList.add('hidden'));
 
-            const targetId = 'sec-' + fId;
+            const targetId = 'sec-' + fId; // 예: sec-기계_07
             const targetSection = document.getElementById(targetId);
             
             if (targetSection) {
                 targetSection.classList.remove('hidden');
                 document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
             } else {
+                // 매칭되는 ID가 없을 때 첫 번째 섹션이라도 보여줌
                 if(allSections[0]) allSections[0].classList.remove('hidden');
-                document.getElementById('facility-title').innerText = "📋 미등록 설비 [" + fId + "]";
+                document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
             }
         }
     }
-
+        
     // 4. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
         if(photoCount >= 3) { alert("사진은 4장까지만 가능합니다."); return; }
