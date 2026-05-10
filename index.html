@@ -669,8 +669,14 @@
     function startInspection(name, phone) {
     // 1. 인증창 숨기기
     document.getElementById('step-auth').classList.add('hidden');
+
+    // 2. 태그 안내 화면(step-scan)에 이름 넣기
+    const welcomeName = document.querySelector('#step-scan h2');
+    if (welcomeName) {
+        welcomeName.innerText = "안녕하세요, " + name + " 님!";
+    }    
     
-    // 2. 점검자 정보 표시
+    // 3. 점검자 정보 표시
     const workerDisplay = document.getElementById('display-worker');
     if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
 
@@ -681,12 +687,12 @@
     // decodeURIComponent: %EC%A0%84%EA%B8%B0 같은 외계어를 '전기'로 바꿔줍니다.
     let currentFId = decodeURIComponent(rawFId).trim();
 
-    // 3. fId가 진짜 없을 때 (태그 안내 화면)
+    // 4. fId가 진짜 없을 때 (태그 안내 화면)
     if (!currentFId || currentFId === "" || currentFId === "null" || currentFId === "undefined") {
         document.getElementById('step-scan').classList.remove('hidden');
         document.getElementById('inspection-form').classList.add('hidden');
     } 
-    // 4. fId가 있을 때 (점검표 화면)
+    // 5. fId가 있을 때 (점검표 화면)
     else {
         document.getElementById('step-scan').classList.add('hidden');
         document.getElementById('inspection-form').classList.remove('hidden');
