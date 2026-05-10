@@ -655,18 +655,17 @@
             .then(res => res.text())
             .then(result => {
                 if (result === "SUCCESS") {
-                    localStorage.setItem('userName', name);
-                    localStorage.setItem('userPhone', phone);
+                    // 성공했을 때만 다음 화면으로!
                     startInspection(name, phone);
                 } else {
-                    alert("❌ 등록되지 않은 사용자입니다. 이 과장에게 문의하세요.");
-                    btn.innerText = "인증 및 점검 시작";
-                    btn.disabled = false;
+                    alert("❌ 등록되지 않은 사용자입니다.");
+                    // 실패하면 화면을 넘기지 않고 그대로 둡니다.
+                    location.reload(); 
                 }
             })
             .catch(err => {
-                alert("네트워크 오류가 발생했습니다.");
-                btn.disabled = false;
+                alert("🌐 네트워크 오류가 발생했습니다. 주소를 확인하세요.");
+                // 에러 시에도 화면을 넘기지 않도록 여기서 멈춰야 합니다.
             });
         }
 
