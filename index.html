@@ -44,6 +44,17 @@
         <button onclick="handleLogin()" class="btn-auth">인증 및 점검 시작</button>
     </div>
 
+    <div id="step-scan" class="card hidden" style="text-align: center; padding: 40px 20px;">
+    <img src="icon.png" style="width: 150px; margin-bottom: 20px;">
+    
+    <h2 style="background: none; font-size: 1.4rem; color: #333;">안녕하세요, ${workerName} 님!</h2>
+    <p style="color: #666; margin-bottom: 30px;">준비가 완료되었습니다.<br>보관함이나 설비의 <b>태그(NFC/QR)</b>를 <br>
+        스캔하여 점검을 시작해 주세요.</p>
+    
+    <div style="font-size: 3rem; margin-bottom: 20px;">📲</div>
+    <div class="status-tag">태그 인식 대기 중...</div>
+</div>
+
     <form id="inspection-form" class="hidden">
         <div class="card" id="form-container">
             <div id="facility-info" class="status-tag">설비 인식 중...</div>
@@ -652,15 +663,24 @@
     }
 
     function startInspection(name, phone) {
-        // 화면 전환
-        document.getElementById('step-auth').classList.add('hidden');
+    // 1. 일단 인증창은 무조건 숨깁니다.
+    document.getElementById('step-auth').classList.add('hidden');
+    
+    // 2. 점검자 정보 표시 (미리 해둠)
+    const workerDisplay = document.getElementById('display-worker');
+    if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
+
+    // [중요] 3. 상황에 따른 화면 전환
+    if (!fId || fId === "") {
+        // 태그(fId)가 없는 경우 -> "태그를 찍어주세요" 안내 화면을 보여줍니다.
+        document.getElementById('step-scan').classList.remove('hidden');
+        document.getElementById('inspection-form').classList.add('hidden');
+    } else {
+        // 태그(fId)가 있는 경우 -> 바로 점검표 양식을 보여줍니다.
+        document.getElementById('step-scan').classList.add('hidden');
         document.getElementById('inspection-form').classList.remove('hidden');
         
-        // 점검자 정보 표시
-        const workerDisplay = document.getElementById('display-worker');
-        if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
-
-        // 모든 섹션 숨김 후 해당 설비 섹션만 노출
+        // 설비별 섹션 활성화 로직
         const allSections = document.querySelectorAll('.section-content');
         allSections.forEach(s => s.classList.add('hidden'));
 
@@ -669,11 +689,11 @@
             targetSection.classList.remove('hidden');
             document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
         } else {
-            // 매칭 안 될 경우 첫 번째 섹션 노출
             if(allSections[0]) allSections[0].classList.remove('hidden');
             document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
         }
     }
+}
 
     // 4. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
