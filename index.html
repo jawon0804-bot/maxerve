@@ -653,11 +653,15 @@
         })
         .catch(err => {
             console.error(err);
-            // 네트워크 오류 시, 이미 저장된 정보가 있다면 일단 통과 (현장 대응용)
-            if(localStorage.getItem('userName')) {
-                startInspection(name, phone);
+            const savedName = localStorage.getItem('userName');
+            const savedPhone = localStorage.getItem('userPhone');
+
+            if(savedName) {
+                // 입력창에 쓴 이름 대신, 이미 검증되어 저장된 "진짜 이름"을 사용합니다.
+                alert("🌐 오프라인 모드로 전환합니다. (기존 인증 정보 사용)");
+                startInspection(savedName, savedPhone);
             } else {
-                alert("🌐 네트워크 연결이 불안정합니다. 다시 시도해 주세요.");
+                alert("🌐 네트워크 연결이 불안정합니다. 첫 인증은 인터넷이 필요합니다.");
             }
         });
     }
