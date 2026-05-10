@@ -648,7 +648,7 @@
                 localStorage.setItem('userPhone', phone);
                 startInspection(name, phone);
             } else {
-                alert("❌ 등록되지 않은 사용자입니다. 관리자(이 과장)에게 문의하세요.");
+                alert("❌ 등록되지 않은 사용자입니다. 관리자에게 문의하세요.");
             }
         })
         .catch(err => {
@@ -671,26 +671,26 @@
     if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
 
     // [중요] 3. 상황에 따른 화면 전환
-    if (!fId || fId === "") {
-        // 태그(fId)가 없는 경우 -> "태그를 찍어주세요" 안내 화면을 보여줍니다.
+    if (!fId || fId === "" || fId === "null" || fId === null || fId === undefined) {
+    // [태그가 없는 경우] -> 안내 화면을 보여줍니다.
         document.getElementById('step-scan').classList.remove('hidden');
         document.getElementById('inspection-form').classList.add('hidden');
     } else {
-        // 태그(fId)가 있는 경우 -> 바로 점검표 양식을 보여줍니다.
+    // [태그가 있는 경우] -> 바로 점검표 양식을 보여줍니다.
         document.getElementById('step-scan').classList.add('hidden');
         document.getElementById('inspection-form').classList.remove('hidden');
         
-        // 설비별 섹션 활성화 로직
-        const allSections = document.querySelectorAll('.section-content');
-        allSections.forEach(s => s.classList.add('hidden'));
+    // 설비별 섹션 활성화 로직
+    const allSections = document.querySelectorAll('.section-content');
+    allSections.forEach(s => s.classList.add('hidden'));
 
-        const targetSection = document.getElementById('sec-' + fId);
-        if (targetSection) {
-            targetSection.classList.remove('hidden');
-            document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
-        } else {
-            if(allSections[0]) allSections[0].classList.remove('hidden');
-            document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
+    const targetSection = document.getElementById('sec-' + fId);
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+        document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
+    } else {
+        if(allSections[0]) allSections[0].classList.remove('hidden');
+        document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
         }
     }
 }
