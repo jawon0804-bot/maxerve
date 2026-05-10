@@ -735,61 +735,60 @@
 
     // 5. 백엔드 전송 및 완료 화면 처리
     function submitToSheet() {
-        const worker = localStorage.getItem('userName') || "미인증";
-        const memo = document.getElementById('memo').value;
-        const btn = document.querySelector('.btn-submit') || document.querySelector('button[onclick="submitToSheet()"]');
+    const worker = localStorage.getItem('userName') || "미인증";
+    const memo = document.getElementById('memo').value;
+    const btn = document.querySelector('.btn-submit') || document.querySelector('button[onclick="submitToSheet()"]');
 
-        const activeSection = document.querySelector('.section-content:not(.hidden)');
-        let detailData = [];
-        if(activeSection) {
-            const inputs = activeSection.querySelectorAll('input, select');
-            inputs.forEach(el => {
-                const labelEl = el.parentElement.querySelector('label');
-                const label = labelEl ? labelEl.innerText : "항목";
-                detailData.push(`[${label}: ${el.value}]`);
-            });
-        }
-
-        if(confirm("점검 데이터를 전송하시겠습니까?")) {
-            btn.innerText = "🚀 전송 중... (잠시만 기다려주세요)";
-            btn.disabled = true;
-
-            fetch(webAppUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)({
-                    worker: worker,
-                    fId: fId,
-                    memo: memo,
-                    photoCount: photoCount,
-                    photoData: photoData, 
-                    dvalues: checkValues
-                })
-                
-            })
-            .then(() => {
-                // 성공 시 화면을 완료 메시지로 교체
-                document.body.innerHTML = `
-                    <div style="text-align:center; padding:100px 20px; font-family:sans-serif;">
-                        <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
-                        <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
-                        <p style="margin-top:30px; color:#999;">수고하셨습니다, ${worker} 과장님!</p>
-                        <button onclick="window.open('about:blank','_self').close();" 
-                                style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold;">
-                            앱 종료하기
-                        </button>
-                    </div>
-                `;
-                // 3초 후 자동 종료 시도
-                setTimeout(() => { window.open('about:blank','_self').close(); }, 3000);
-            })
-            .catch(err => {
-                alert("❌ 전송 실패: " + err);
-                btn.innerText = "점검 완료 및 전송";
-                btn.disabled = false;
-            });
-        }
+    const activeSection = document.querySelector('.section-content:not(.hidden)');
+    let detailData = [];
+    if(activeSection) {
+        const inputs = activeSection.querySelectorAll('input, select');
+        inputs.forEach(el => {
+            const labelEl = el.parentElement.querySelector('label');
+            const label = labelEl ? labelEl.innerText : "항목";
+            detailData.push(`[${label}: ${el.value}]`);
+        });
     }
+
+    if(confirm("점검 데이터를 전송하시겠습니까?")) {
+        btn.innerText = "🚀 전송 중... (잠시만 기다려주세요)";
+        btn.disabled = true;
+
+        // [중요 수정] JSON.stringify 안에 데이터를 바로 넣어야 합니다.
+        fetch(webAppUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                worker: worker,
+                fId: fId,
+                memo: memo,
+                photoCount: photoCount,
+                photoData: photoData,
+                values: detailData // 'dvalues'를 'values'로 변경하고 'detailData'를 연결
+            })
+        })
+        .then(() => {
+            // 성공 시 화면을 완료 메시지로 교체
+            document.body.innerHTML = `
+                <div style="text-align:center; padding:100px 20px; font-family:sans-serif;">
+                    <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
+                    <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
+                    <p style="margin-top:30px; color:#999;">수고하셨습니다, ${worker} 과장님!</p>
+                    <button onclick="window.open('about:blank','_self').close();" 
+                            style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold;">
+                        앱 종료하기
+                    </button>
+                </div>
+            `;
+            setTimeout(() => { window.open('about:blank','_self').close(); }, 3000);
+        })
+        .catch(err => {
+            alert("❌ 전송 실패: " + err);
+            btn.innerText = "점검 완료 및 전송";
+            btn.disabled = false;
+        });
+    }
+}
 </script>
 </body>
 </html>
