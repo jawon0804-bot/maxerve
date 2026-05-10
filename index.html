@@ -807,20 +807,26 @@
             })
         })
         .then(() => {
-            // 성공 시 화면을 완료 메시지로 교체
-            document.body.innerHTML = `
-                <div style="text-align:center; padding:100px 20px; font-family:sans-serif;">
-                    <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
-                    <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
-                    <p style="margin-top:30px; color:#999;">수고하셨습니다, ${worker} 과장님!</p>
-                    <button onclick="window.open('about:blank','_self').close();" 
-                            style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold;">
-                        앱 종료하기
-                    </button>
-                </div>
-            `;
-            setTimeout(() => { window.open('about:blank','_self').close(); }, 3000);
-        })
+        // [수정] 카메라 잔상을 없애기 위해 현재 페이지의 모든 요소를 날리고 완료 메시지를 띄웁니다.
+        document.open(); // 현재 문서 초기화 (카메라 연결 등 끊기)
+        document.write(`
+            <div style="text-align:center; padding:100px 20px; font-family:sans-serif; background:#fff; height:100vh;">
+                <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
+                <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
+                <p style="margin-top:30px; color:#999;">오늘도 안전한 맥서브! 고생하셨습니다.</p>
+                <button onclick="location.href='about:blank';" 
+                        style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold; font-size:1.1rem;">
+                    확인
+                </button>
+            </div>
+        `);
+        document.close();
+
+        // 3초 뒤에 아예 빈 화면으로 이동 (카메라 강제 종료 효과)
+        setTimeout(() => { 
+            location.href = "about:blank"; 
+        }, 3000);
+    })
         .catch(err => {
             alert("❌ 전송 실패: " + err);
             btn.innerText = "점검 완료 및 전송";
