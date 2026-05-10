@@ -47,7 +47,7 @@
     <div id="step-scan" class="card hidden" style="text-align: center; padding: 40px 20px;">
     <img src="icon.png" style="width: 250px; margin-bottom: 20px;">
     
-    <h2 style="background: none; font-size: 1.4rem; color: #333;">안녕하세요, ${workerName} 님!</h2>
+    <h2 style="background: none; font-size: 1.2rem; color: #333;">안녕하세요, ${workerName} 님!</h2>
     <p style="color: #666; margin-bottom: 30px;">준비가 완료되었습니다.<br>보관함이나 설비의 <b>태그(NFC/QR)</b>를 <br>
         스캔하여 점검을 시작해 주세요.</p>
     
@@ -682,10 +682,14 @@
 
     // [핵심 보강] 주소창의 fId를 가져와서 '한글'로 완벽하게 변환합니다.
     const urlParams = new URLSearchParams(window.location.search);
-    let rawFId = urlParams.get('fId') || "";
-    
-    // decodeURIComponent: %EC%A0%84%EA%B8%B0 같은 외계어를 '전기'로 바꿔줍니다.
-    let currentFId = decodeURIComponent(rawFId).trim();
+
+    // 'fId'로도 찾아보고, 없으면 'id'로도 찾아봅니다. (둘 다 허용)
+    let rawFId = urlParams.get('fId') || urlParams.get('id') || "";
+
+    // 한글 해독 및 공백 제거
+    let fId = decodeURIComponent(rawFId).trim();
+
+    console.log("인식된 설비 ID:", fId); // 이제 '기계_07'이 잘 찍힐 겁니다!
 
     // 4. fId가 진짜 없을 때 (태그 안내 화면)
     if (!currentFId || currentFId === "" || currentFId === "null" || currentFId === "undefined") {
