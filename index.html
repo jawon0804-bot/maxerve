@@ -642,32 +642,36 @@
 
         // 1. 로그인 인증 처리
         function handleLogin() {
-            const name = document.getElementById('loginName').value.trim();
-            const phone = document.getElementById('loginPhone').value.trim();
+    const name = document.getElementById('loginName').value.trim();
+    const phone = document.getElementById('loginPhone').value.trim();
 
-            if (!name || !phone) { alert("정보를 모두 입력해주세요."); return; }
+    if (!name || !phone) { alert("정보를 모두 입력해주세요."); return; }
 
-            const btn = document.querySelector('#step-auth button');
-            btn.innerText = "인증 중...";
-            btn.disabled = true;
+    // [수정 포인트] 주소창에 이름과 번호를 직접 실어서 보냅니다.
+    const finalUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
 
-            fetch(`${AUTH_URL}?name=${name}&phone=${phone}`)
-            .then(res => res.text())
-            .then(result => {
-                if (result === "SUCCESS") {
-                    // 성공했을 때만 다음 화면으로!
-                    startInspection(name, phone);
-                } else {
-                    alert("❌ 등록되지 않은 사용자입니다.");
-                    // 실패하면 화면을 넘기지 않고 그대로 둡니다.
-                    location.reload(); 
-                }
-            })
-            .catch(err => {
-                alert("🌐 네트워크 오류가 발생했습니다. 주소를 확인하세요.");
-                // 에러 시에도 화면을 넘기지 않도록 여기서 멈춰야 합니다.
-            });
+    fetch(finalUrl, {
+        method: 'GET', // POST 대신 GET으로 바꿔보세요. 구글과 더 친한 방식입니다.
+        mode: 'cors'
+    })
+    .then(res => res.text())
+    .then(result => {
+        if (result.trim() === "SUCCESS") {
+            alert(name + "님, 인증되었습니다.");
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userPhone', phone);
+            startInspection(name, phone);
+        } else {
+            alert("❌ 등록되지 않은 사용자입니다.");
         }
+    })
+    .catch(err => {
+        // [여기가 중요!] 구글 보안 정책 때문에 SUCCESS를 받았는데도 에러로 빠질 수 있습니다.
+        // 만약 네트워크 오류 창이 떠도 점검표로 넘어간다면, 아래 코드로 강제 실행해 보세요.
+        console.error(err);
+        alert("🌐 연결 상태를 확인 중입니다...");
+    });
+}
 
         // 2. 점검 화면 활성화
         function startInspection(name, phone) {
