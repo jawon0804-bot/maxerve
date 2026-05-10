@@ -563,17 +563,18 @@
             <hr>
             <h2>📝 공통 사항</h2>
             <div class="item">
-                <label>특이사항 메모</label>
-                <textarea id="memo" rows="3" placeholder="내용을 입력하세요."></textarea>
+                <label>📸 현장 사진 (점검, 위험물, 파손 등)</label>
+                <button type="button" onclick="addPhoto()" class="btn-photo">📷 사진 촬영 및 추가 (최대 3장)</button>
+                <div id="photo-preview-container"></div>
             </div>
             <div class="item">
-                <label>현장 사진 (최대 4장)</label>
-                <button type="button" onclick="addPhoto()" class="btn-photo">📸 사진 찍기</button>
-                <div id="photo-preview-container"></div>
+                <label>특이사항 메모</label>
+                <textarea id="memo" rows="3" placeholder="내용을 입력하세요."></textarea>
             </div>
 
             <button type="button" onclick="submitToSheet()" id="submit-btn" class="btn-submit">✅ 점검 완료 및 전송</button>
         </div>
+           
     </form>
 
     <script>
@@ -762,7 +763,7 @@
                     memo: memo,
                     photoCount: photoCount,
                     photoData: photoData, 
-                    details: detailData.join(" ")
+                    dvalues: checkValues
                 })
             })
             .then(() => {
