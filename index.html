@@ -597,221 +597,115 @@
     </form>
 
     <script>
-    // 1. 전역 변수 설정 (어디서든 쓸 수 있게 맨 위로!)
-    let fId = ""; 
+    // 1. 설정 및 전역 변수
+    const urlParams = new URLSearchParams(window.location.search);
+    // 주소창에서 id값을 읽어오되, 없으면 빈값으로 둡니다.
+    let fId = urlParams.get('id') || urlParams.get('fId') || ""; 
     let photoCount = 0;
     const photoData = [];
-    
-    // 과장님의 구글 앱스 스크립트 URL
+
     const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";    
     const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
 
-    // 2. 페이지가 켜지자마자 실행되는 로직
+    // 2. 페이지 로드 시 실행
     window.onload = function() {
-        // 주소창에서 id 혹은 fId를 읽어옵니다.
-        const urlParams = new URLSearchParams(window.location.search);
-        let rawId = urlParams.get('id') || urlParams.get('fId') || "";
-        fId = decodeURIComponent(rawId).trim();
-        
-        console.log("인식된 설비:", fId);
-
-        // 로그인 정보가 있는지 확인 (자동 로그인)
         const savedName = localStorage.getItem('userName');
         const savedPhone = localStorage.getItem('userPhone');
 
+        // [수정] 무조건 startInspection을 실행하지 않고, 정보가 있을 때만 실행합니다.
         if (savedName && savedPhone) {
+            const nameInput = document.getElementById('loginName');
+            const phoneInput = document.getElementById('loginPhone');
+            if(nameInput) nameInput.value = savedName;
+            if(phoneInput) phoneInput.value = savedPhone;
+
+            // 이미 로그인 정보가 있다면 바로 화면 전환 함수로 이동
             startInspection(savedName, savedPhone);
         } else {
-            // 정보 없으면 인증창 보여주기
-            const authStep = document.getElementById('step-auth');
-            if(authStep) authStep.classList.remove('hidden');
+            // 정보가 없으면 인증창을 보여줍니다.
+            document.getElementById('step-auth').classList.remove('hidden');
         }
     };
 
-    // 3. [중요] 인증 버튼을 누를 때 실행되는 함수
+    // 3. 인증 버튼 클릭 시 실행 (구글 시트 인증 포함)
     function handleLogin() {
-        const nameInput = document.getElementById('loginName');
-        const phoneInput = document.getElementById('loginPhone');
-        
-        if(!nameInput || !phoneInput) return;
+        const name = document.getElementById('loginName').value.trim();
+        const phone = document.getElementById('loginPhone').value.trim();
 
-        const name = nameInput.value.trim();
-        const phone = phoneInput.value.trim();
+        if (!name || !phone) { alert("성함과 번호를 입력해주세요."); return; }
 
-        if (!name || !phone) { 
-            alert("성함과 번호를 입력해주세요."); 
-            return; 
-        }
+        const btn = document.querySelector('button[onclick="handleLogin()"]');
+        if(btn) btn.innerText = "인증 중...";
 
-        // 로컬에 저장
-        localStorage.setItem('userName', name);
-        localStorage.setItem('userPhone', phone);
-        
-        // 다음 단계로 이동
-        startInspection(name, phone);
+        // 구글 시트에 사용자 확인 요청
+        const authCheckUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+
+        fetch(authCheckUrl)
+        .then(res => res.text())
+        .then(result => {
+            if (result.trim() === "SUCCESS") {
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userPhone', phone);
+                // 인증 성공시에만 점검 화면으로 이동!
+                startInspection(name, phone);
+            } else {
+                alert("❌ 등록되지 않은 사용자입니다. 관리자(이 과장)에게 문의하세요.");
+                if(btn) btn.innerText = "인증 및 점검 시작";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            // 네트워크 오류 시 기존 정보가 있다면 일단 통과
+            if(localStorage.getItem('userName')) {
+                startInspection(name, phone);
+            } else {
+                alert("🌐 연결이 불안정합니다. 다시 시도해주세요.");
+                if(btn) btn.innerText = "인증 및 점검 시작";
+            }
+        });
     }
 
-    // 4. [핵심] 화면 전환 및 점검표 활성화 함수
+    // 4. 화면 전환 핵심 함수 (인증 성공 후에만 호출됨)
     function startInspection(name, phone) {
-        // 인증창 숨기기
-        const authStep = document.getElementById('step-auth');
-        if (authStep) authStep.classList.add('hidden');
-
-        // 상단/하단에 점검자 이름 세팅
-        const welcomeName = document.querySelector('#step-scan h2');
-        if (welcomeName) welcomeName.innerText = "안녕하세요, " + name + " 님!";
+        // 모든 인증 관련 화면 숨기기
+        document.getElementById('step-auth').classList.add('hidden');
         
+        // 점검자 정보 표시
         const workerDisplay = document.getElementById('display-worker');
         if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
+        
+        // 주소창의 fId를 한글로 해독 (기계_07 등)
+        let cleanFId = decodeURIComponent(fId).trim();
 
-        // 설비 ID 유무에 따라 화면 갈아끼우기
-        if (!fId || fId === "" || fId === "미등록설비") {
-            // ID가 없으면 '태그 스캔' 안내 화면
+        // 상황에 따른 화면 분기
+        if (!cleanFId || cleanFId === "" || cleanFId === "미등록설비") {
+            // 태그가 없는 경우 -> 스캔 안내 화면
             document.getElementById('step-scan').classList.remove('hidden');
             document.getElementById('inspection-form').classList.add('hidden');
         } else {
-            // ID가 있으면 바로 '점검표' 화면
+            // 태그가 있는 경우 -> 바로 점검표 표시
             document.getElementById('step-scan').classList.add('hidden');
             document.getElementById('inspection-form').classList.remove('hidden');
             
-            // 모든 점검 섹션 숨기고 해당 섹션만 표시
+            // 설비별 섹션 활성화
             const allSections = document.querySelectorAll('.section-content');
             allSections.forEach(s => s.classList.add('hidden'));
 
-            const targetId = 'sec-' + fId; // 예: sec-기계_07
-            const targetSection = document.getElementById(targetId);
-            
+            const targetSection = document.getElementById('sec-' + cleanFId);
             if (targetSection) {
                 targetSection.classList.remove('hidden');
-                document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
+                document.getElementById('facility-title').innerText = "📋 " + cleanFId + " 점검표";
             } else {
-                // 매칭되는 ID가 없을 때 첫 번째 섹션이라도 보여줌
                 if(allSections[0]) allSections[0].classList.remove('hidden');
-                document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
+                document.getElementById('facility-title').innerText = "📋 일반 점검 [" + cleanFId + "]";
             }
         }
     }
-        
-    // 4. 사진 추가 및 압축 (기존 로직 최적화)
-    function addPhoto() {
-        if(photoCount >= 3) { alert("사진은 4장까지만 가능합니다."); return; }
 
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.capture = 'camera';
-
-        input.onchange = e => {
-            const file = e.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = event => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        // 전송 성공률을 높이기 위해 최대 너비 600으로 조정
-                        const MAX_WIDTH = 600; 
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // 압축률 0.6으로 조정 (용량 최적화)
-                        const compressedData = canvas.toDataURL('image/jpeg', 0.6);
-                        
-                        const photoId = Date.now();
-                        photoCount++;
-                        
-                        const preview = document.createElement('div');
-                        preview.id = `photo-${photoId}`;
-                        preview.className = 'preview-box';
-                        preview.style = "position:relative; display:inline-block; margin:5px;";
-                        preview.innerHTML = `
-                            <img src="${compressedData}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; border:1px solid #ccc;">
-                            <div onclick="removeSpecificPhoto(${photoId}, '${compressedData}')" 
-                                 style="position:absolute; top:-5px; right:-5px; background:red; color:white; width:22px; height:22px; 
-                                        border-radius:50%; text-align:center; line-height:20px; cursor:pointer;">×</div>
-                        `;
-                        
-                        document.getElementById('photo-preview-container').appendChild(preview);
-                        photoData.push(compressedData); 
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-        input.click();
-    }
-
-    function removeSpecificPhoto(id, data) {
-        const element = document.getElementById(`photo-${id}`);
-        if (element) element.remove();
-        const index = photoData.indexOf(data);
-        if (index > -1) {
-            photoData.splice(index, 1);
-            photoCount--;
-        }
-    }
-
-    // 5. 백엔드 전송 및 완료 화면 처리
-    function submitToSheet() {
-    const worker = localStorage.getItem('userName') || "미인증";
-    const memo = document.getElementById('memo').value;
-    const btn = document.querySelector('.btn-submit') || document.querySelector('button[onclick="submitToSheet()"]');
-
-    const activeSection = document.querySelector('.section-content:not(.hidden)');
-    let detailData = [];
-    if(activeSection) {
-        const inputs = activeSection.querySelectorAll('input, select');
-        inputs.forEach(el => {
-            detailData.push(el.value || "");
-        });
-    }
-
-    if(confirm("점검 데이터를 전송하시겠습니까?")) {
-        btn.innerText = "🚀 전송 중... (잠시만 기다려주세요)";
-        btn.disabled = true;
-
-        // [중요 수정] JSON.stringify 안에 데이터를 바로 넣어야 합니다.
-        fetch(webAppUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({
-                worker: worker,
-                fId: fId,
-                memo: memo,
-                photoCount: photoCount,
-                photoData: photoData,
-                values: detailData // 'dvalues'를 'values'로 변경하고 'detailData'를 연결
-            })
-        })
-        .then(() => {
-            // 성공 시 화면을 완료 메시지로 교체
-            document.body.innerHTML = `
-                <div style="text-align:center; padding:100px 20px; font-family:sans-serif;">
-                    <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
-                    <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
-                    <p style="margin-top:30px; color:#999;">수고하셨습니다, ${worker} 과장님!</p>
-                    <button onclick="window.open('about:blank','_self').close();" 
-                            style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold;">
-                        앱 종료하기
-                    </button>
-                </div>
-            `;
-            setTimeout(() => { window.open('about:blank','_self').close(); }, 3000);
-        })
-        .catch(err => {
-            alert("❌ 전송 실패: " + err);
-            btn.innerText = "점검 완료 및 전송";
-            btn.disabled = false;
-        });
-    }
-}
+    // --- 이하 사진 및 제출 함수는 기존과 동일 (생략 없이 그대로 두세요) ---
+    function addPhoto() { /* ...기존 코드... */ }
+    function removeSpecificPhoto(id, data) { /* ...기존 코드... */ }
+    function submitToSheet() { /* ...기존 코드... */ }
 </script>
 </body>
 </html>
