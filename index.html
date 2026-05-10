@@ -44,18 +44,6 @@
         <button onclick="handleLogin()">인증 및 점검 시작</button>
     </div>
 
-    <!-- [STEP 2] 점검표 본문 (처음엔 숨김) -->
-    <div id="inspection-form" class="hidden">
-        <h2 id="facility-title">📋 점검표</h2>
-        
-        <div class="card">
-            <p><strong>점검자:</strong> <span id="display-worker"></span></p>
-            <textarea id="memo" placeholder="특이사항 및 점검 메모를 입력하세요."></textarea>
-            
-            <button onclick="addPhoto()" style="background: #28a745; margin-bottom: 10px;">📸 사진 첨부 (최대 4장)</button>
-            <div id="photo-preview-container"></div>
-        </div>
-
 <!-- [STEP 2] 설비 점검 양식 -->
 <form id="inspection-form" class="hidden">
     <div class="card">
