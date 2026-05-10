@@ -744,9 +744,7 @@
     if(activeSection) {
         const inputs = activeSection.querySelectorAll('input, select');
         inputs.forEach(el => {
-            const labelEl = el.parentElement.querySelector('label');
-            const label = labelEl ? labelEl.innerText : "항목";
-            detailData.push(`[${label}: ${el.value}]`);
+            detailData.push(el.value || "");
         });
     }
 
