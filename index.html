@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maxerve Facility System</title>
-    <!-- 위에서 만든 신분증 연결 -->
+    <title>Maxerve 스마트 점검</title>
     <link rel="manifest" href="manifest.json">
-    <!-- 아이폰 전용 설정 (아이콘 표시용) -->
     <link rel="apple-touch-icon" href="icon.png">
     <style>
         :root { --primary: #1a73e8; --success: #34a853; --warning: #f39c12; --bg: #f8f9fa; }
@@ -14,760 +12,166 @@
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h1 { font-size: 1.2rem; color: var(--primary); border-left: 5px solid var(--primary); padding-left: 10px; margin-bottom: 20px; }
         h2 { font-size: 0.95rem; background: #f1f3f4; padding: 10px; border-radius: 6px; margin: 20px 0 10px 0; font-weight: bold; }
-        
         .item { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.85rem; color: #555; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; box-sizing: border-box; font-size: 1rem; transition: border 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; }
-        
-        button { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-auth { background: var(--primary); color: white; }
-        .btn-photo { background: var(--warning); color: white; margin: 10px 0; }
-        .btn-submit { background: var(--success); color: white; margin-top: 25px; font-size: 1.1rem; }
-        
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; }
+        .btn-auth { background: var(--primary); }
+        .btn-photo { background: var(--warning); margin: 10px 0; }
+        .btn-submit { background: var(--success); margin-top: 25px; font-size: 1.1rem; }
         .hidden { display: none; }
         #photo-preview-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
         .preview-box { width: 70px; height: 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; position: relative; }
         .preview-box img { width: 100%; height: 100%; object-fit: cover; }
-        
         .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; background: #e8f0fe; color: var(--primary); margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
- <!-- [STEP 1] 로그인/인증 화면 -->
     <div id="step-auth" class="card">
-        <h2>🔐 점검자 인증</h2>
-        <p>이 과장님이 등록한 이름과 번호를 입력하세요.</p>
+        <h2 id="auth-status">🔐 점검자 인증</h2>
+        <p>등록된 이름과 번호를 입력하세요.</p>
         <input type="text" id="loginName" placeholder="성함 입력">
         <input type="tel" id="loginPhone" placeholder="전화번호 입력 (숫자만)">
-        <button onclick="handleLogin()">인증 및 점검 시작</button>
+        <button onclick="handleLogin()" class="btn-auth">인증 및 점검 시작</button>
     </div>
 
-<!-- [STEP 2] 설비 점검 양식 -->
-<form id="inspection-form" class="hidden">
-    <div class="card">
-        <div id="facility-info" class="status-tag">설비 인식 중...</div>
-        <h1 id="facility-title">점검표</h1>
-        
-        <!-- [전기설비 섹션] -->
-        <div id="sec-전기_01" class="hidden section-content">
-        <h2>⚡ 수변전설비 점검</h2>
+    <form id="inspection-form" class="hidden">
+        <div class="card">
+            <div id="facility-info" class="status-tag">설비 인식 중...</div>
+            <h1 id="facility-title">점검표</h1>
+            <p style="font-size: 0.8rem; color: #666;">점검자: <span id="display-worker"></span></p>
+            <hr>
 
-        <h3>⏰ 점검표 기록 시간</h3>
-        <div class="item">
-            <label>시간 설정</label>
-            <select name="time"><option value="null">-</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
-        </div>    
-           
-        <h3>1. HV-4 MAIN VCB</h3>
-          <div class="item"><label>전압 (KV)</label><input type="number" name="vcb_kv" placeholder=" HV-4 MAIN VCB_KV" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="vcb_a_r" placeholder=" HV-4 MAIN VCB_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="vcb_a_s" placeholder=" HV-4 MAIN VCB_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="vcb_a_t" placeholder=" HV-4 MAIN VCB_T" required></div>
-          <div class="item"><label>전력 (KW)</label><input type="number" name="vcb_kw" placeholder=" HV-4 MAIN VCB_KW" required></div>
-          <div class="item"><label>역률 (COS)</label><input type="number" name="vcb_cos" placeholder=" HV-4 MAIN VCB_COS" required></div>
+            <div id="sec-전기_01" class="hidden section-content">
+                <h2>⚡ 수변전설비 (VCB/LV)</h2>
+                <div class="item"><label>시간 설정</label><select name="time"><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select></div>
+                <div class="item"><label>HV-4 VCB 전압(KV)</label><input type="number" name="vcb_kv" required></div>
+                </div>
 
-        <h3>2. LV1</h3>
-          <div class="item"><label>전압 (V)</label><input type="number" name="lv1_v" placeholder="V" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="lv1_a_r" placeholder="LV1_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="lv1_a_s" placeholder="LV1_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="lv1_a_t" placeholder="LV1_T" required></div>
+            <div id="sec-기계_01" class="hidden section-content">
+                <h2>🗜 부스터펌프 점검</h2>
+                <div class="item"><label>밸브 개폐 정상인가?</label><select name="p1_03"><option value="정상">정상</option><option value="불량">불량</option></select></div>
+                </div>
 
-        <h3>3. LV2</h3>
-          <div class="item"><label>전압 (V)</label><input type="number" name="lv2_v" placeholder="V" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="lv2_a_r" placeholder="LV1_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="lv2_a_s" placeholder="LV1_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="lv2_a_t" placeholder="LV1_T" required></div>
-     
-</div>
-
-         <div id="sec-전기_02" class="hidden section-content">
-        <h2>⚡ 수변전설비 점검</h2>
-
-        <h3>⏰점검표 기록 시간</h3>
-        <div class="item">
-            <label>시간 설정</label>
-            <select name="time"><option value="null">-</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
-        </div>
-        
-        <h3>1. TR1 [750KVA]</h3>
-        <div class="item"><label>온도 (℃)</label><input type="number" name="tr1_temp" placeholder="TR1_℃" required></div>
-        <div class="item">
-            <label>냄새</label>
-            <select name="tr1_smell"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-        <div class="item">
-            <label>소음</label>
-            <select name="tr1_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-
-        <h3>2. TR2 [750KVA]</h3>
-        <div class="item"><label>온도 (℃)</label><input type="number" name="tr2_temp" placeholder="TR2_℃" required></div>
-        <div class="item">
-            <label>냄새</label>
-            <select name="tr2_smell"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-        <div class="item">
-            <label>소음</label>
-            <select name="tr2_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-
-        <h3>3. LVR (정류기)</h3>
-        <div class="item"><label>AC_RS</label><input type="number" name="lvr_rs" placeholder="LVR_RS" required></div>
-        <div class="item"><label>AC_ST</label><input type="number" name="lvr_st" placeholder="LVR_ST" required></div>
-        <div class="item"><label>AC_TR</label><input type="number" name="lvr_tr" placeholder="LVR_TR" required></div>
-        <div class="item"><label>DC [V]</label><input type="number" name="lvr_dcv" placeholder="LVR_[V]" required></div>
-        <div class="item"><label>DC [A]</label><input type="number" name="lvr_dca" placeholder="LVR_[A]" required></div>
-        <div class="item">
-            <label>배터리</label>
-            <select name="lvr_bat"><option value="양호">양호</option><option value="이상">이상</option></select>
-        </div>
-        
-        <h3>4. 검침현황 (밤 12시)</h3>
-        <div class="item"><label>④ 현재 누적 주간 유효</label><input type="number" step="0.01" name="check_day" placeholder="소수점 두자리 까지" required></div>
-        <div class="item"><label>⑤ 현재 누적 저녁 유효</label><input type="number" step="0.01" name="check_evening" placeholder="소수점 두자리 까지" required></div>
-        <div class="item"><label>⑥ 현재 누적 심야 유효</label><input type="number" step="0.01" name="check_night" placeholder="소수점 두자리 까지" required></div>
-        
-</div>
-
-        <!-- [통신설비 섹션] -->
-        <div id="sec-통신" class="hidden section-content">
-            <h2>📶 통신/네트워크 점검항목</h2>
-            <div class="item"><label>서버랙/UPS 전원상태</label>
-                <select name="comm_pwr"><option value="정상">정상</option><option value="이상발생">이상발생</option></select>
-            </div>
-            <div class="item"><label>L2/L3 스위치 링크상태</label>
-                <select name="net_link"><option value="양호">양호</option><option value="포트장애">포트장애</option></select>
-            </div>
-            <div class="item"><label>실내/EPS실 온도(℃)</label><input type="number" name="comm_temp" placeholder="온도 입력"></div>
-        </div>
-
-        <!-- [소방설비 섹션] -->
-        <div id="sec-소방" class="hidden section-content">
-            <h2>🔥 소방/방재 점검항목</h2>
-            <div class="item"><label>수신기 화재표시등 상태</label>
-                <select name="fire_ind"><option value="정상(소등)">정상(소등)</option><option value="이상(점등)">이상(점등)</option></select>
-            </div>
-            <div class="item"><label>경보장치 연동 상태</label>
-                <select name="bell_stat"><option value="정상연동">정상연동</option><option value="연동정지">연동정지</option></select>
-            </div>
-            <div class="item"><label>배관 압력(MPa)</label><input type="number" step="0.01" name="fire_p" placeholder="수치 입력"></div>
-        </div>
-
-        <!-- [기계설비 섹션] -->
-        <div id="sec-기계_01" class="hidden section-content">
-            <h2>🗜 부스터펌프 점검</h2>
-            <h3>1. 상수 공급펌프</h3>
-
-            <div class="item"><label>전력 공급상태 및 회전방향 정상인가?</label>
-                <select name="p1_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부스터 펌프 유니트 고정 상태는 정상인가?</label>
-                <select name="p1_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p1_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>축 봉(패킹, Mechanical Seal등)의 Leak는 없는가?</label>
-                <select name="p1_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부스터 시스템은 정상으로 작동되는가?</label>
-                <select name="p1_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설정 압력은 잘 유지되는가?</label>
-                <select name="p1_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 진동은 없는가?</label>
-                <select name="p1_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 이상 소음은 없는가?</label>
-                <select name="p1_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 과열상태는 이상 없는가?</label>
-                <select name="p1_09"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>심한 압력 변동은 없는가?</label>
-                <select name="p1_10"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>운전 전류는 정상인가?</label>
-                <select name="p1_11"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관 보온 및 Leak 부위는 없는가?</label>
-                <select name="p1_12"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손 부위는 없는가?</label>
-                <select name="p1_13"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설비 및 주위 청소상태는 양호한가?</label>
-                <select name="p1_14"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_02" class="hidden section-content">
-            <h2>🗜 부스터펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전력 공급상태 및 회전방향 정상인가?</label>
-                <select name="p2_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부스터 펌프 유니트 고정 상태는 정상인가?</label>
-                <select name="p2_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p2_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>축 봉(패킹, Mechanical Seal등)의 Leak는 없는가?</label>
-                <select name="p2_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부스터 시스템은 정상으로 작동되는가?</label>
-                <select name="p2_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설정 압력은 잘 유지되는가?</label>
-                <select name="p2_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 진동은 없는가?</label>
-                <select name="p2_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 이상 소음은 없는가?</label>
-                <select name="p2_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 과열상태는 이상 없는가?</label>
-                <select name="p2_09"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>심한 압력 변동은 없는가?</label>
-                <select name="p2_10"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>운전 전류는 정상인가?</label>
-                <select name="p2_11"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관 보온 및 Leak 부위는 없는가?</label>
-                <select name="p2_12"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손 부위는 없는가?</label>
-                <select name="p2_13"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설비 및 주위 청소상태는 양호한가?</label>
-                <select name="p2_14"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_03" class="hidden section-content">
-            <h2>🗜 수중 펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전원 공급 상태는 정상인가?</label>
-                <select name="p3_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 회전은 정상인가?</label>
-                <select name="p3_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p3_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관의 Leak 부위는 없는가?</label>
-                <select name="p3_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit내 배수는 잘 되는가?</label>
-                <select name="p3_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>레벨스위치는 정상으로 작동되는가?</label>
-                <select name="p3_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit 및 pump의 청소상태?</label>
-                <select name="p3_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손부위는 없는가??</label>
-                <select name="p3_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_04" class="hidden section-content">
-            <h2>🗜 수중 펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전원 공급 상태는 정상인가?</label>
-                <select name="p4_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 회전은 정상인가?</label>
-                <select name="p4_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p4_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관의 Leak 부위는 없는가?</label>
-                <select name="p4_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit내 배수는 잘 되는가?</label>
-                <select name="p4_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>레벨스위치는 정상으로 작동되는가?</label>
-                <select name="p4_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit 및 pump의 청소상태?</label>
-                <select name="p4_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손부위는 없는가??</label>
-                <select name="p4_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_05" class="hidden section-content">
-            <h2>🗜 수중 펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전원 공급 상태는 정상인가?</label>
-                <select name="p5_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 회전은 정상인가?</label>
-                <select name="p5_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p5_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관의 Leak 부위는 없는가?</label>
-                <select name="p5_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit내 배수는 잘 되는가?</label>
-                <select name="p5_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>레벨스위치는 정상으로 작동되는가?</label>
-                <select name="p5_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit 및 pump의 청소상태?</label>
-                <select name="p5_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손부위는 없는가??</label>
-                <select name="p5_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_06" class="hidden section-content">
-            <h2>🗜 수중 펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전원 공급 상태는 정상인가?</label>
-                <select name="p6_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 회전은 정상인가?</label>
-                <select name="p6_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p6_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관의 Leak 부위는 없는가?</label>
-                <select name="p6_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit내 배수는 잘 되는가?</label>
-                <select name="p6_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>레벨스위치는 정상으로 작동되는가?</label>
-                <select name="p6_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit 및 pump의 청소상태?</label>
-                <select name="p6_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손부위는 없는가??</label>
-                <select name="p6_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_07" class="hidden section-content">
-            <h2>🗜 수중 펌프 점검</h2>
-            <h3>1. 저수조 공급펌프</h3>
-
-            <div class="item"><label>전원 공급 상태는 정상인가?</label>
-                <select name="p7_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>펌프의 회전은 정상인가?</label>
-                <select name="p7_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>밸브 개폐는 정상인가?</label>
-                <select name="p7_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>배관의 Leak 부위는 없는가?</label>
-                <select name="p7_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit내 배수는 잘 되는가?</label>
-                <select name="p7_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>레벨스위치는 정상으로 작동되는가?</label>
-                <select name="p7_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>pit 및 pump의 청소상태?</label>
-                <select name="p7_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>노후 및 파손부위는 없는가??</label>
-                <select name="p7_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_08" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 1호 (승객)</h3>
-
-            <div class="item"><label>열쇠_비상열쇠 관리 상태</label>
-                <select name="elv1_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_각 층 승강기 버튼의 정상 작동 여부</label>
-                <select name="elv1_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_탈락, 파손, 훼손 유무</label>
-                <select name="elv1_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>램프_승강기 램프의 정상 표시 여부</label>
-                <select name="elv1_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어 탈락, 휨, 이격 여부</label>
-                <select name="elv1_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어의 변형, 마모, 부식 여부</label>
-                <select name="elv1_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_승강기 안전검사 합격필증 부착 여부</label>
-                <select name="elv1_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_안전표시 적정 부착 여부</label>
-                <select name="elv1_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>통화장치_비상통화 장치의 정상 작동 여부</label>
-                <select name="elv1_09"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>조작반_조작반 시건 여부</label>
-                <select name="elv1_10"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>운행상태_승강기 운행간 과도한 소음, 진동, 작동 이상 상태 발생 여부</label>
-                <select name="elv1_11"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_09" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 2호 (화물)</h3>
-
-            <div class="item"><label>열쇠_비상열쇠 관리 상태</label>
-                <select name="elv2_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_각 층 승강기 버튼의 정상 작동 여부</label>
-                <select name="elv2_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_탈락, 파손, 훼손 유무</label>
-                <select name="elv2_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>램프_승강기 램프의 정상 표시 여부</label>
-                <select name="elv2_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어 탈락, 휨, 이격 여부</label>
-                <select name="elv2_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어의 변형, 마모, 부식 여부</label>
-                <select name="elv2_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_승강기 안전검사 합격필증 부착 여부</label>
-                <select name="elv2_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_안전표시 적정 부착 여부</label>
-                <select name="elv2_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>통화장치_비상통화 장치의 정상 작동 여부</label>
-                <select name="elv2_09"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>조작반_조작반 시건 여부</label>
-                <select name="elv2_10"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>운행상태_승강기 운행간 과도한 소음, 진동, 작동 이상 상태 발생 여부</label>
-                <select name="elv2_11"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_10" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 3호 (화물)</h3>
-
-            <div class="item"><label>열쇠_비상열쇠 관리 상태</label>
-                <select name="elv_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_각 층 승강기 버튼의 정상 작동 여부</label>
-                <select name="elv_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>버튼_탈락, 파손, 훼손 유무</label>
-                <select name="elv_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>램프_승강기 램프의 정상 표시 여부</label>
-                <select name="elv_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어 탈락, 휨, 이격 여부</label>
-                <select name="elv_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>도어_도어의 변형, 마모, 부식 여부</label>
-                <select name="elv_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_승강기 안전검사 합격필증 부착 여부</label>
-                <select name="elv_07"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>부착물_안전표시 적정 부착 여부</label>
-                <select name="elv_08"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>통화장치_비상통화 장치의 정상 작동 여부</label>
-                <select name="elv_09"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>조작반_조작반 시건 여부</label>
-                <select name="elv_10"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>운행상태_승강기 운행간 과도한 소음, 진동, 작동 이상 상태 발생 여부</label>
-                <select name="elv_11"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-    
-        <div id="sec-기계_11" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 1호 기계실</h3>
-
-            <div class="item"><label>작업공간_작업구간 및 통로에 이동을 방해하는 장애물 여부</label>
-                <select name="elv_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 환기시설이 적정 설치 및 작동 여부</label>
-                <select name="elv_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 누수 또는 빗물 유입 여부</label>
-                <select name="elv_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_작업구간 및 통로에 적정 조도의 조명 설치 여부</label>
-                <select name="elv_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>시건_기계실 출입문 시건장치 정상 여부</label>
-                <select name="elv_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설비_전동기, 권상기, 제어반 등에 발열, 소음, 진동 여부</label>
-                <select name="elv_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_12" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 2호 기계실</h3>
-
-            <div class="item"><label>작업공간_작업구간 및 통로에 이동을 방해하는 장애물 여부</label>
-                <select name="elv_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 환기시설이 적정 설치 및 작동 여부</label>
-                <select name="elv_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 누수 또는 빗물 유입 여부</label>
-                <select name="elv_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_작업구간 및 통로에 적정 조도의 조명 설치 여부</label>
-                <select name="elv_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>시건_기계실 출입문 시건장치 정상 여부</label>
-                <select name="elv_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설비_전동기, 권상기, 제어반 등에 발열, 소음, 진동 여부</label>
-                <select name="elv_06"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <div id="sec-기계_13" class="hidden section-content">
-            <h2>🔼 승강기 점검</h2>
-            <h3>승강기 3호 기계실</h3>
-
-            <div class="item"><label>작업공간_작업구간 및 통로에 이동을 방해하는 장애물 여부</label>
-                <select name="elv_01"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 환기시설이 적정 설치 및 작동 여부</label>
-                <select name="elv_02"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_기계실 내부 누수 또는 빗물 유입 여부</label>
-                <select name="elv_03"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>작업공간_작업구간 및 통로에 적정 조도의 조명 설치 여부</label>
-                <select name="elv_04"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>시건_기계실 출입문 시건장치 정상 여부</label>
-                <select name="elv_05"><option value="null">-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-            <div class="item"><label>설비_전동기, 권상기, 제어반 등에 발열, 소음, 진동 여부</label>
-                <select name="elv_06"><option value="null">N-</option><option value="정상">정상</option><option value="불량">불량</option><option value="정비요망">정비요망</option></select>
-            </div>
-        </div>
-
-        <!-- [공통: 사진 및 메모] -->
-        <div id="common-footer">
-            <h2>📸 현장 사진 (점검, 위험물, 파손 등)</h2>
-            <div id="photo-preview-container"></div>
-            <button type="button" class="btn-photo" onclick="addPhoto()">📷 사진 촬영 및 추가 (최대 4장)</button>
-            
+            <hr>
+            <h2>📝 공통 사항</h2>
             <div class="item">
-                <label>특이사항 및 조치메모</label>
-                <textarea id="memo" rows="3" placeholder="이상 부위나 작업 내용을 상세히 입력하세요."></textarea>
+                <label>특이사항 메모</label>
+                <textarea id="memo" rows="3" placeholder="내용을 입력하세요."></textarea>
+            </div>
+            <div class="item">
+                <label>현장 사진 (최대 4장)</label>
+                <button type="button" onclick="addPhoto()" class="btn-photo">📸 사진 찍기</button>
+                <div id="photo-preview-container"></div>
             </div>
 
-            <button type="button" class="btn-submit" onclick="submitToSheet()">점검 완료 (시트 전송)</button>
+            <button type="button" onclick="submitToSheet()" id="submit-btn" class="btn-submit">✅ 점검 완료 및 전송</button>
         </div>
-    </div>
-</form>
+    </form>
 
     <script>
-        // --- 설정 데이터 ---
-        const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec"; 
-        const DATA_URL = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec";
+        const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec"; // /exec로 끝나는 주소
+        const DATA_URL = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
-        const fId = urlParams.get('id') || '미등록설비';
-        let photoCount = 0;
+        const fId = urlParams.get('id') || '기본설비';
         const photoData = [];
 
-        // 페이지 로드 시 자동 로그인 확인
+        // [자동 하이패스] 페이지 로드 시 정보 있으면 자동 인증
         window.onload = function() {
-            const savedName = localStorage.getItem('userName');
-            const savedPhone = localStorage.getItem('userPhone');
-            if (savedName && savedPhone) {
-                document.getElementById('loginName').value = savedName;
-                document.getElementById('loginPhone').value = savedPhone;
-                // 원하신다면 여기서 바로 handleLogin()을 실행해 '하이패스'를 만들 수 있습니다.
+            const sName = localStorage.getItem('userName');
+            const sPhone = localStorage.getItem('userPhone');
+            if (sName && sPhone) {
+                document.getElementById('loginName').value = sName;
+                document.getElementById('loginPhone').value = sPhone;
+                document.getElementById('auth-status').innerText = "🔄 자동 인증 중...";
+                handleLogin();
             }
         };
 
-        // 1. 로그인 인증 처리
         function handleLogin() {
-    const name = document.getElementById('loginName').value.trim();
-    const phone = document.getElementById('loginPhone').value.trim();
+            const name = document.getElementById('loginName').value.trim();
+            const phone = document.getElementById('loginPhone').value.trim();
+            if (!name || !phone) return;
 
-    if (!name || !phone) { alert("정보를 모두 입력해주세요."); return; }
-
-    // [수정 포인트] 주소창에 이름과 번호를 직접 실어서 보냅니다.
-    const finalUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
-
-    fetch(finalUrl, {
-        method: 'GET', // POST 대신 GET으로 바꿔보세요. 구글과 더 친한 방식입니다.
-        mode: 'cors'
-    })
-    .then(res => res.text())
-    .then(result => {
-        if (result.trim() === "SUCCESS") {
-            alert(name + "님, 인증되었습니다.");
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userPhone', phone);
-            startInspection(name, phone);
-        } else {
-            alert("❌ 등록되지 않은 사용자입니다.");
+            // GET 방식으로 인증 시도 (네트워크 오류 방지)
+            fetch(`${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`)
+            .then(res => res.text())
+            .then(result => {
+                if (result.trim() === "SUCCESS") {
+                    localStorage.setItem('userName', name);
+                    localStorage.setItem('userPhone', phone);
+                    showForm(name, phone);
+                } else {
+                    alert("❌ 미등록 사용자입니다.");
+                    localStorage.clear();
+                    location.reload();
+                }
+            })
+            .catch(err => alert("네트워크 통신 오류가 발생했습니다."));
         }
-    })
-    .catch(err => {
-        // [여기가 중요!] 구글 보안 정책 때문에 SUCCESS를 받았는데도 에러로 빠질 수 있습니다.
-        // 만약 네트워크 오류 창이 떠도 점검표로 넘어간다면, 아래 코드로 강제 실행해 보세요.
-        console.error(err);
-        alert("🌐 연결 상태를 확인 중입니다...");
-    });
-}
 
-        // 2. 점검 화면 활성화
-        function startInspection(name, phone) {
+        function showForm(name, phone) {
             document.getElementById('step-auth').classList.add('hidden');
             document.getElementById('inspection-form').classList.remove('hidden');
             document.getElementById('display-worker').innerText = `${name} (${phone})`;
+            document.getElementById('facility-info').innerText = "인식된 설비: " + fId;
+            document.getElementById('facility-title').innerText = fId + " 점검표";
 
-            const allSections = document.querySelectorAll('.section-content');
-            allSections.forEach(s => s.classList.add('hidden'));
-
-            const targetSection = document.getElementById('sec-' + fId);
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-                document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
-            } else {
-                document.getElementById('sec-기계').classList.remove('hidden');
-                document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
-            }
+            // 해당 설비 섹션만 노출
+            const target = document.getElementById('sec-' + fId);
+            if (target) target.classList.remove('hidden');
+            else document.querySelectorAll('.section-content')[0].classList.remove('hidden'); // 기본값
         }
 
-        // 3. 사진 추가 (기존 과장님 코드 유지)
         function addPhoto() {
-            if(photoCount >= 3) { alert("사진은 4장까지만 가능합니다."); return; }
+            if(photoData.length >= 4) return alert("최대 4장입니다.");
             const input = document.createElement('input');
             input.type = 'file'; input.accept = 'image/*'; input.capture = 'camera';
             input.onchange = e => {
-                const file = e.target.files[0];
-                if(file) {
-                    const reader = new FileReader();
-                    reader.onload = event => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800;
-                            let width = img.width; let height = img.height;
-                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                            canvas.width = width; canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
-                            
-                            const photoId = Date.now();
-                            photoCount++;
-                            const preview = document.createElement('div');
-                            preview.id = `photo-${photoId}`;
-                            preview.className = 'preview-box';
-                            preview.innerHTML = `
-                                <img src="${compressedData}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; border:1px solid #ccc;">
-                                <div onclick="removeSpecificPhoto(${photoId}, '${compressedData}')" 
-                                     style="position:absolute; top:-5px; right:-5px; background:red; color:white; width:22px; height:22px; border-radius:50%; text-align:center; line-height:20px; cursor:pointer;">×</div>
-                            `;
-                            document.getElementById('photo-preview-container').appendChild(preview);
-                            photoData.push(compressedData);
-                        };
-                        img.src = event.target.result;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 600; canvas.height = (img.height/img.width)*600;
+                        canvas.getContext('2d').drawImage(img, 0, 0, 600, canvas.height);
+                        const data = canvas.toDataURL('image/jpeg', 0.7);
+                        photoData.push(data);
+                        const div = document.createElement('div');
+                        div.className = 'preview-box';
+                        div.innerHTML = `<img src="${data}">`;
+                        document.getElementById('photo-preview-container').appendChild(div);
                     };
-                    reader.readAsDataURL(file);
-                }
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
             };
             input.click();
         }
 
-        function removeSpecificPhoto(id, data) {
-            document.getElementById(`photo-${id}`).remove();
-            const index = photoData.indexOf(data);
-            if (index > -1) { photoData.splice(index, 1); photoCount--; }
-        }
-
-        // 4. 데이터 최종 전송
         function submitToSheet() {
-            const worker = document.getElementById('display-worker').innerText;
-            const memo = document.getElementById('memo').value;
-            const activeSection = document.querySelector('.section-content:not(.hidden)');
-            let checkValues = [];
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "전송 중..."; btn.disabled = true;
+
+            const formData = new FormData(document.getElementById('inspection-form'));
+            const dataObj = Object.fromEntries(formData.entries());
             
-            if(activeSection) {
-                const inputs = activeSection.querySelectorAll('input, select');
-                inputs.forEach(el => checkValues.push(el.value || ""));
-            }
+            const payload = {
+                worker: localStorage.getItem('userName'),
+                fId: fId,
+                memo: document.getElementById('memo').value,
+                photos: photoData,
+                checkData: dataObj
+            };
 
-            if(confirm("점검 데이터를 전송하시겠습니까?")) {
-                const btn = document.getElementById('submit-btn');
-                btn.innerText = "전송 중...";
-                btn.disabled = true;
-
-                const payload = {
-                    worker: worker,
-                    fId: fId,
-                    memo: memo,
-                    photoCount: photoCount,
-                    photoData: photoData,
-                    values: checkValues
-                };
-
-                fetch(DATA_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(payload)
-                })
-                .then(() => {
-                    alert("✅ 전송 완료! 수고하셨습니다.");
-                    location.reload();
-                })
-                .catch(err => {
-                    alert("❌ 오류 발생: " + err);
-                    btn.disabled = false;
-                });
-            }
+            fetch(DATA_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+            .then(() => {
+                alert("✅ 점검표 전송 완료!");
+                location.reload();
+            })
+            .catch(err => alert("전송 실패: " + err));
         }
     </script>
 </body>
