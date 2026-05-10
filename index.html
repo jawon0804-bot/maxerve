@@ -70,126 +70,217 @@
     </form>
 
     <script>
-        // 과장님의 실제 주소로 교체하세요!
-        const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec"; 
-        const DATA_URL = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
+    // 1. 설정 및 초기 변수
+    const urlParams = new URLSearchParams(window.location.search);
+    const fId = urlParams.get('id') || '미등록설비'; // NFC/QR에서 id값을 읽음
+    let photoCount = 0;
+    const photoData = [];
+    // 과장님의 실제 구글 스크립트 URL (기존 URL 유지)
+    const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";    
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbz_tQj2dpwgztpHW_K0UE43HsXze8Zf7Mt6e8jZM92Uf0EWQq2AP4y7kKQt1qm5yYZu/exec"; 
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fId = urlParams.get('id') || '기본설비';
-        const photoData = [];
+    // 2. 페이지 로드 시 자동 실행
+    window.onload = function() {
+        // 로컬 스토리지에서 이전 로그인 정보 확인
+        const savedName = localStorage.getItem('userName');
+        const savedPhone = localStorage.getItem('userPhone');
 
-        window.onload = function() {
-            const sName = localStorage.getItem('userName');
-            const sPhone = localStorage.getItem('userPhone');
-            if (sName && sPhone) {
-                document.getElementById('loginName').value = sName;
-                document.getElementById('loginPhone').value = sPhone;
-                document.getElementById('auth-status').innerText = "🔄 자동 인증 중...";
-                handleLogin();
+        if (savedName && savedPhone) {
+            // 정보가 있으면 입력창에 세팅하고 바로 점검 시작
+            // (step-auth 화면의 입력창 ID가 loginName, loginPhone인 경우)
+            const nameInput = document.getElementById('loginName');
+            const phoneInput = document.getElementById('loginPhone');
+            
+            if(nameInput) nameInput.value = savedName;
+            if(phoneInput) phoneInput.value = savedPhone;
+
+            // 하이패스 실행
+            startInspection(savedName, savedPhone);
+        } else {
+            // 정보가 없으면 인증 화면 유지
+            document.getElementById('step-auth').classList.remove('hidden');
+        }
+    };
+
+    // 3. 점검 시작 함수 (인증 로직 포함)
+    function handleLogin() {
+        const name = document.getElementById('loginName').value.trim();
+        const phone = document.getElementById('loginPhone').value.trim();
+
+        if (!name || !phone) { alert("성함과 번호를 입력해주세요."); return; }
+
+        // [추가된 인증 로직] 구글 시트(사용자명부)에 확인 요청
+        const authCheckUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+
+        fetch(authCheckUrl)
+        .then(res => res.text())
+        .then(result => {
+            if (result.trim() === "SUCCESS") {
+                // 인증 성공 시 정보 저장 및 점검 화면으로 이동
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userPhone', phone);
+                startInspection(name, phone);
+            } else {
+                alert("❌ 등록되지 않은 사용자입니다. 관리자(이 과장)에게 문의하세요.");
             }
-        };
+        })
+        .catch(err => {
+            console.error(err);
+            // 네트워크 오류 시, 이미 저장된 정보가 있다면 일단 통과 (현장 대응용)
+            if(localStorage.getItem('userName')) {
+                startInspection(name, phone);
+            } else {
+                alert("🌐 네트워크 연결이 불안정합니다. 다시 시도해 주세요.");
+            }
+        });
+    }
 
-        function handleLogin() {
-            const name = document.getElementById('loginName').value.trim();
-            const phone = document.getElementById('loginPhone').value.trim();
-            if (!name || !phone) return;
+    function startInspection(name, phone) {
+        // 화면 전환
+        document.getElementById('step-auth').classList.add('hidden');
+        document.getElementById('inspection-form').classList.remove('hidden');
+        
+        // 점검자 정보 표시
+        const workerDisplay = document.getElementById('display-worker');
+        if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
 
-            fetch(`${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`)
-            .then(res => res.text())
-            .then(result => {
-                if (result.trim() === "SUCCESS") {
-                    localStorage.setItem('userName', name);
-                    localStorage.setItem('userPhone', phone);
-                    showForm(name, phone);
-                } else {
-                    alert("❌ 미등록 사용자입니다.");
-                    localStorage.clear();
-                    location.reload();
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                // 네트워크 오류 창이 떠도 이미 로그인 정보가 있으면 넘겨버림 (하이패스 보완)
-                if(localStorage.getItem('userName')) showForm(name, phone);
-            });
+        // 모든 섹션 숨김 후 해당 설비 섹션만 노출
+        const allSections = document.querySelectorAll('.section-content');
+        allSections.forEach(s => s.classList.add('hidden'));
+
+        const targetSection = document.getElementById('sec-' + fId);
+        if (targetSection) {
+            targetSection.classList.remove('hidden');
+            document.getElementById('facility-title').innerText = "📋 " + fId + " 점검표";
+        } else {
+            // 매칭 안 될 경우 첫 번째 섹션 노출
+            if(allSections[0]) allSections[0].classList.remove('hidden');
+            document.getElementById('facility-title').innerText = "📋 일반 점검 [" + fId + "]";
         }
+    }
 
-        function showForm(name, phone) {
-            document.getElementById('step-auth').classList.add('hidden');
-            document.getElementById('inspection-form').classList.remove('hidden');
-            document.getElementById('display-worker').innerText = `${name} (${phone})`;
-            document.getElementById('facility-info').innerText = "인식된 설비: " + fId;
-            document.getElementById('facility-title').innerText = fId + " 점검표";
+    // 4. 사진 추가 및 압축 (기존 로직 최적화)
+    function addPhoto() {
+        if(photoCount >= 4) { alert("사진은 4장까지만 가능합니다."); return; }
 
-            document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
-            const target = document.getElementById('sec-' + fId);
-            if (target) target.classList.remove('hidden');
-            else document.querySelectorAll('.section-content')[0].classList.remove('hidden');
-        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'camera';
 
-        function addPhoto() {
-            if(photoData.length >= 4) return alert("사진은 최대 4장입니다.");
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = 'image/*'; input.capture = 'camera';
-            input.onchange = e => {
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if(file) {
                 const reader = new FileReader();
-                reader.onload = ev => {
+                reader.onload = event => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        // 사진 크기 대폭 축소 (전송 안정성 확보)
-                        const MAX_WIDTH = 500;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = (img.height / img.width) * MAX_WIDTH;
-                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const data = canvas.toDataURL('image/jpeg', 0.6);
-                        photoData.push(data);
-                        const div = document.createElement('div');
-                        div.className = 'preview-box';
-                        div.innerHTML = `<img src="${data}">`;
-                        document.getElementById('photo-preview-container').appendChild(div);
+                        // 전송 성공률을 높이기 위해 최대 너비 600으로 조정
+                        const MAX_WIDTH = 600; 
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 압축률 0.6으로 조정 (용량 최적화)
+                        const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        const photoId = Date.now();
+                        photoCount++;
+                        
+                        const preview = document.createElement('div');
+                        preview.id = `photo-${photoId}`;
+                        preview.className = 'preview-box';
+                        preview.style = "position:relative; display:inline-block; margin:5px;";
+                        preview.innerHTML = `
+                            <img src="${compressedData}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; border:1px solid #ccc;">
+                            <div onclick="removeSpecificPhoto(${photoId}, '${compressedData}')" 
+                                 style="position:absolute; top:-5px; right:-5px; background:red; color:white; width:22px; height:22px; 
+                                        border-radius:50%; text-align:center; line-height:20px; cursor:pointer;">×</div>
+                        `;
+                        
+                        document.getElementById('photo-preview-container').appendChild(preview);
+                        photoData.push(compressedData); 
                     };
-                    img.src = ev.target.result;
+                    img.src = event.target.result;
                 };
-                reader.readAsDataURL(e.target.files[0]);
-            };
-            input.click();
+                reader.readAsDataURL(file);
+            }
+        };
+        input.click();
+    }
+
+    function removeSpecificPhoto(id, data) {
+        const element = document.getElementById(`photo-${id}`);
+        if (element) element.remove();
+        const index = photoData.indexOf(data);
+        if (index > -1) {
+            photoData.splice(index, 1);
+            photoCount--;
+        }
+    }
+
+    // 5. 백엔드 전송 및 완료 화면 처리
+    function submitToSheet() {
+        const worker = localStorage.getItem('userName') || "미인증";
+        const memo = document.getElementById('memo').value;
+        const btn = document.querySelector('.btn-submit') || document.querySelector('button[onclick="submitToSheet()"]');
+
+        const activeSection = document.querySelector('.section-content:not(.hidden)');
+        let detailData = [];
+        if(activeSection) {
+            const inputs = activeSection.querySelectorAll('input, select');
+            inputs.forEach(el => {
+                const labelEl = el.parentElement.querySelector('label');
+                const label = labelEl ? labelEl.innerText : "항목";
+                detailData.push(`[${label}: ${el.value}]`);
+            });
         }
 
-        function submitToSheet() {
-            const btn = document.getElementById('submit-btn');
-            btn.innerText = "🚀 전송 중... (잠시만 기다리세요)"; 
+        if(confirm("점검 데이터를 전송하시겠습니까?")) {
+            btn.innerText = "🚀 전송 중... (잠시만 기다려주세요)";
             btn.disabled = true;
 
-            const formData = new FormData(document.getElementById('inspection-form'));
-            const dataObj = Object.fromEntries(formData.entries());
-            
-            const payload = {
-                worker: localStorage.getItem('userName'),
-                fId: fId,
-                memo: document.getElementById('memo').value,
-                photos: photoData,
-                checkData: dataObj
-            };
-
-            fetch(DATA_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+            fetch(webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    worker: worker,
+                    fId: fId,
+                    memo: memo,
+                    photoCount: photoCount,
+                    photoData: photoData, 
+                    details: detailData.join(" ")
+                })
+            })
             .then(() => {
-                // [성공 화면 교체] 리로드 하지 않고 완료 메시지 표시
-                document.getElementById('form-container').innerHTML = `
-                    <div style="text-align:center; padding:40px 10px;">
-                        <h1 style="color:var(--success); font-size:2rem;">✅ 전송 완료</h1>
-                        <p style="font-size:1.1rem; color:#555;">데이터가 구글 시트에 안전하게 기록되었습니다.</p>
-                        <p style="margin-top:20px; color:#888;">수고하셨습니다, ${payload.worker} 과장님!</p>
-                        <button onclick="location.href='index.html'" style="background:#666; margin-top:30px; width:auto; padding:10px 30px;">처음으로</button>
+                // 성공 시 화면을 완료 메시지로 교체
+                document.body.innerHTML = `
+                    <div style="text-align:center; padding:100px 20px; font-family:sans-serif;">
+                        <h1 style="color:#34a853; font-size:2.5rem;">✅ 전송 완료</h1>
+                        <p style="font-size:1.2rem; color:#555;">데이터와 사진이 안전하게 기록되었습니다.</p>
+                        <p style="margin-top:30px; color:#999;">수고하셨습니다, ${worker} 과장님!</p>
+                        <button onclick="window.open('about:blank','_self').close();" 
+                                style="margin-top:40px; padding:15px 40px; background:#444; color:white; border:none; border-radius:10px; font-weight:bold;">
+                            앱 종료하기
+                        </button>
                     </div>
                 `;
+                // 3초 후 자동 종료 시도
+                setTimeout(() => { window.open('about:blank','_self').close(); }, 3000);
             })
             .catch(err => {
-                alert("전송 중 오류가 발생했습니다.");
-                btn.innerText = "✅ 점검 완료 및 전송";
+                alert("❌ 전송 실패: " + err);
+                btn.innerText = "점검 완료 및 전송";
                 btn.disabled = false;
             });
         }
-    </script>
+    }
+</script>
 </body>
 </html>
