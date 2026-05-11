@@ -870,6 +870,20 @@ function closeScanner() {
         document.getElementById('scanner-modal').style.display = 'none';
     }
 }
+	
+		// 뒤로가기 감지 및 제어
+    history.pushState(null, null, location.href); // 현재 상태를 역사에 한 번 더 밀어넣기
+
+    window.onpopstate = function() {
+        // 사용자가 뒤로가기를 누르면 이 함수가 실행됩니다.
+        if (confirm("점검 시스템을 종료하시겠습니까?")) {
+            window.close(); // 브라우저 창 닫기 (앱 형태일 때 작동)
+            // 만약 창이 안 닫히면 메인 빈 페이지나 종료 안내 페이지로 보낼 수도 있습니다.
+        } else {
+            // 취소를 누르면 다시 현재 상태로 고정
+            history.pushState(null, null, location.href);
+        }
+    };
 
     // 6. 백엔드 전송 및 완료 화면 처리
     function submitToSheet() {
