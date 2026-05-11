@@ -829,48 +829,47 @@
         }
     }
     // 5. QR 코드 스캔
-    let html5QrCode;
+let html5QrCode;
 
-    function openScanner() {
-        document.getElementById('scanner-modal').style.display = 'block';
-        html5QrCode = new Html5Qrcode("reader");
-    
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            config, 
-            (decodedText) => {
-                // 인식되자마자 일단 변환부터!
-                const cleanUrl = decodeURIComponent(decodedText).trim();
+function openScanner() {
+    document.getElementById('scanner-modal').style.display = 'block';
+    html5QrCode = new Html5Qrcode("reader");
 
-                // 1. 카메라 정지 명령을 내리고, "완전히 멈춘 뒤에(then)" 다음 일을 시킵니다.
-                html5QrCode.stop().then(() => {
-                    // 2. 모달을 닫습니다.
-                    document.getElementById('scanner-modal').style.display = 'none';
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-                    // 3. 아주 짧은 시간(0.1초) 뒤에 확인창을 띄워 브라우저에 숨 쉴 틈을 줍니다.
-                    setTimeout(() => {
-                        if (confirm("점검표를 여시겠습니까? \n" + cleanUrl)) {
-                            location.href = cleanUrl; 
-                        }
-                    }, 100);
-                }).catch(err => {
-                    console.error("멈춤 실패:", err);
-                    // 에러가 나도 이동은 시켜줍니다.
-                    location.href = cleanUrl;
-                });
-            }
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+            const cleanUrl = decodeURIComponent(decodedText).trim();
 
-    function closeScanner() {
-        if (html5QrCode) {
             html5QrCode.stop().then(() => {
                 document.getElementById('scanner-modal').style.display = 'none';
+
+                setTimeout(() => {
+                    if (confirm("점검표를 여시겠습니까? \n" + cleanUrl)) {
+                        location.href = cleanUrl;
+                    }
+                }, 100);
+            }).catch(err => {
+                console.error("멈춤 실패:", err);
+                location.href = cleanUrl;
             });
-        } else {
-            document.getElementById('scanner-modal').style.display = 'none';
         }
+    ); // <--- 이 부분! start 함수를 닫는 괄호가 꼭 있어야 합니다.
+} // <--- 이 부분! openScanner 함수를 완전히 닫아주는 괄호입니다.
+
+function closeScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scanner-modal').style.display = 'none';
+        }).catch(() => {
+            document.getElementById('scanner-modal').style.display = 'none';
+        });
+    } else {
+        document.getElementById('scanner-modal').style.display = 'none';
     }
+}
 
     // 6. 백엔드 전송 및 완료 화면 처리
     function submitToSheet() {
