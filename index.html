@@ -847,7 +847,7 @@ function openScanner() {
                 document.getElementById('scanner-modal').style.display = 'none';
 
                 setTimeout(() => {
-                    if (confirm("점검표를 여시겠습니까? \n" + cleanUrl)) {
+                    if (confirm("점검 대상이 확인되었습니다.\n해당 점검표로 이동하려면 확인 버튼을 누르세요!")) {
                         location.href = cleanUrl;
                     }
                 }, 100);
