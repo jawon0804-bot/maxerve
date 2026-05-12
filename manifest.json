@@ -1,6 +1,6 @@
 {
-  "name": "맥서브 스마트 점검",
-  "short_name": "스마트점검",
+  "name": "Maxerve Smart",
+  "short_name": "Maxerve SMART",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
