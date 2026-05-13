@@ -464,33 +464,44 @@ function closeScanner() {
 
             fetch(webAppUrl, {
                 method: 'POST',
-                mode: 'no-cors', // 주석: 구글 앱스 스크립트 POST의 특성상 no-cors 사용
+                // mode: 'no-cors'는 삭제했습니다!
                 body: JSON.stringify({
                     worker: worker,
                     fId: fId,
                     memo: memo,
-                    photoData: photoData, // 압축된 사진 배열
-                    values: finalValues  // 20개로 정렬된 점검 결과
+                    photoData: photoData,
+                    values: finalValues
                 })
             })
+            .then(res => res.text()) // 텍스트로 먼저 변환
             .then(result => {
-			    if (result.trim() === "SUCCESS") {
-			        alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
-			        
-			        // 1. 중복 클릭 방지를 위해 버튼 비활성화
-			        document.getElementById('submit-btn').disabled = true;
-			        document.getElementById('submit-btn').innerText = "전송 완료";
-			
-			        // 2. 창 닫기 시도 (NFC/웹앱 환경)
-			        setTimeout(function() {
-			            window.close(); // 일반적인 창 닫기
-			            self.close();   // 일부 브라우저 대응
-			            
-			            // 만약 창이 안 닫히면 안내 문구 출력
-			            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>점검이 완료되었습니다.<br>이 창을 닫아주세요.</h2>";
-			        }, 1000); // 1초 뒤에 닫기
-			    }
-			});
+                console.log("응답 결과:", result); // 디버깅용
+                
+                // 결과에 SUCCESS가 포함되어 있으면 통과!
+                if (result.indexOf("SUCCESS") !== -1) {
+                    alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
+                    
+                    document.getElementById('submit-btn').disabled = true;
+                    document.getElementById('submit-btn').innerText = "전송 완료";
+
+                    setTimeout(function() {
+                        window.close();
+                        document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>점검 완료!<br>창을 닫아주세요.</h2>";
+                    }, 1000);
+                } else {
+                    // SUCCESS가 아닌 에러 메시지가 왔을 때
+                    alert("전송 실패: " + result);
+                    btn.innerText = "다시 시도";
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                // 아예 통신 자체가 실패했을 때 (오타 등)
+                console.error("전송 에러:", err);
+                alert("네트워크 오류가 발생했습니다.");
+                btn.innerText = "다시 시도";
+                btn.disabled = false;
+            });
 		}
 	}
 </script>
