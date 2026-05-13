@@ -231,85 +231,80 @@
     </form>
 
     <script>
-    // 1. 설정 및 전역 변수
+    // 1. 설정 및 전역 변수 (기존과 동일)
     const urlParams = new URLSearchParams(window.location.search);
     let fId = urlParams.get('id') || urlParams.get('fId') || ""; 
     let photoCount = 0;
     const photoData = [];
 
+    // 과장님의 구글 웹앱 주소 (이걸로 데이터를 당겨옵니다)
     const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";    
     const webAppUrl = "https://script.google.com/macros/s/AKfycbzwMeYJ-2O9sw3QY6zty3aOkUr-TtiuZrzi5qe_o9MgA7JlGYcR6TdD8NJm9xeqK6-0ug/exec"; 
 
+    // 2. 통합 로드 함수 (중복 제거)
     window.onload = function() {
         const savedName = localStorage.getItem('userName');
         const savedPhone = localStorage.getItem('userPhone');
 
-        if (savedName && savedPhone) {
-            startInspection(savedName, savedPhone);
-        } else {
-            document.getElementById('step-auth').classList.remove('hidden');
-        }
-    };
+	    if (savedName && savedPhone) {
+	        // 이미 로그인 정보가 있다면 입력창에 채워주고 바로 시작
+	        const nameInput = document.getElementById('loginName');
+	        const phoneInput = document.getElementById('loginPhone');
+	        if(nameInput) nameInput.value = savedName;
+	        if(phoneInput) phoneInput.value = savedPhone;
 
-    // 2. 페이지 로드 시 실행
-    window.onload = function() {
-        const savedName = localStorage.getItem('userName');
-        const savedPhone = localStorage.getItem('userPhone');
-
-        // [수정] 무조건 startInspection을 실행하지 않고, 정보가 있을 때만 실행합니다.
-        if (savedName && savedPhone) {
-            const nameInput = document.getElementById('loginName');
-            const phoneInput = document.getElementById('loginPhone');
-            if(nameInput) nameInput.value = savedName;
-            if(phoneInput) phoneInput.value = savedPhone;
-
-            // 이미 로그인 정보가 있다면 바로 화면 전환 함수로 이동
-            startInspection(savedName, savedPhone);
-        } else {
-            // 정보가 없으면 인증창을 보여줍니다.
-            document.getElementById('step-auth').classList.remove('hidden');
-        }
-    };
-
-    // 3. 인증 버튼 클릭 시 실행 (구글 시트 인증 포함)
-    function handleLogin() {
-        const name = document.getElementById('loginName').value.trim();
-        const phone = document.getElementById('loginPhone').value.trim();
-
-        if (!name || !phone) { alert("성함과 번호를 입력해주세요."); return; }
-
-        const btn = document.querySelector('button[onclick="handleLogin()"]');
-        if(btn) btn.innerText = "인증 중...";
-
-        // 구글 시트에 사용자 확인 요청
-        const authCheckUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
-
-        fetch(authCheckUrl)
-        .then(res => res.text())
-        .then(result => {
-            if (result.trim() === "SUCCESS") {
-                localStorage.setItem('userName', name);
-                localStorage.setItem('userPhone', phone);
-                // 인증 성공시에만 점검 화면으로 이동!
-                startInspection(name, phone);
-            } else {
-                alert("❌ 등록되지 않은 사용자입니다. 관리자에게 문의하세요.");
-                if(btn) btn.innerText = "인증 및 점검 시작";
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            // 네트워크 오류 시 기존 정보가 있다면 일단 통과
-            if(localStorage.getItem('userName')) {
-                startInspection(name, phone);
-            } else {
-                alert("🌐 연결이 불안정합니다. 다시 시도해주세요.");
-                if(btn) btn.innerText = "인증 및 점검 시작";
-            }
-        });
-    }
-
-    // 4. 화면 전환 및 데이터 로드 핵심 함수
+	        startInspection(savedName, savedPhone);
+	    } else {
+	        // 정보가 없으면 인증창 노출
+	        document.getElementById('step-auth').classList.remove('hidden');
+	    }
+	};
+	
+	// 3. 점검 시작 및 데이터 로딩 분기
+	function startInspection(name, phone) {
+	    document.getElementById('step-auth').classList.add('hidden');
+	    
+	    if (fId) {
+	        // URL에 ID가 있으면 바로 점검표 로드 (fetch 방식 호출)
+	        loadFacilityConfig(fId);
+	    } else {
+	        // ID가 없으면 스캔 대기 화면 노출
+	        document.getElementById('step-scan').classList.remove('hidden');
+	        initScanner(); // 스캐너 시작 함수 (있으시다면)
+	    }
+	}
+	
+	// 4. [핵심 수정] 깃허브에서도 작동하는 데이터 로드 함수
+	function loadFacilityConfig(targetFid) {
+	    const titleEl = document.getElementById('facility-title');
+	    const categoryEl = document.getElementById('facility-category');
+	    
+	    if(titleEl) titleEl.innerText = "🔄 데이터를 불러오는 중...";
+	
+	    // google.script.run 대신 fetch 사용!
+	    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+	        .then(res => res.json())
+	        .then(response => {
+	            if (response) {
+	                document.getElementById('step-scan').classList.add('hidden');
+	                document.getElementById('inspection-form').classList.remove('hidden');
+	                
+	                // B열, C열 매칭 교정 반영
+	                if(categoryEl) categoryEl.innerText = "[" + response.category + "]";
+	                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+	                
+	                renderDynamicForm(response.configString);
+	            } else {
+	                alert("❌ 등록되지 않은 설비 ID입니다.");
+	            }
+	        })
+	        .catch(err => {
+	            console.error("로드 에러:", err);
+	            alert("통신 에러가 발생했습니다. 구글 앱 배포 상태를 확인하세요.");
+	        });
+	}
+    
+	// 5. 화면 전환 및 데이터 로드 핵심 함수
     function startInspection(name, phone) {
         document.getElementById('step-auth').classList.add('hidden');
         
@@ -362,7 +357,7 @@
             }
         })
         .getFacilityInfo(targetFid); // Code.gs의 함수 호출
-}
+	}
 
     // [이 과장님의 유동적 항목 생성 로직 보완]
     function renderDynamicForm(configString) {
@@ -391,7 +386,7 @@
         });
     }
 
-     // 5. 사진 추가 및 압축 (기존 로직 최적화)
+     // 6. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
         if(photoCount >= 3) { alert("사진은 4장까지만 가능합니다."); return; }
 
@@ -456,7 +451,7 @@
             photoCount--;
         }
     }
-    // 5. QR 코드 스캔
+    // 7. QR 코드 스캔
 let html5QrCode;
 
 function openScanner() {
@@ -537,7 +532,7 @@ function closeScanner() {
           });
       }
 
-   // 6. 백엔드 전송 (20개 항목 배열 맞춤형)
+   // 8. 백엔드 전송 (20개 항목 배열 맞춤형)
     function submitToSheet() {
         const worker = localStorage.getItem('userName') || "미인증";
         const memo = document.getElementById('memo').value;
