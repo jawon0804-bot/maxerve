@@ -259,7 +259,45 @@
         }
     };
 
-    // 3. 점검 시작 및 데이터 로딩 분기
+	 // 3. 인증 버튼 클릭 시 실행 (구글 시트 인증 포함)
+    function handleLogin() {
+        const name = document.getElementById('loginName').value.trim();
+        const phone = document.getElementById('loginPhone').value.trim();
+
+        if (!name || !phone) { alert("성함과 번호를 입력해주세요."); return; }
+
+        const btn = document.querySelector('button[onclick="handleLogin()"]');
+        if(btn) btn.innerText = "인증 중...";
+
+        // 구글 시트에 사용자 확인 요청
+        const authCheckUrl = `${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+
+        fetch(authCheckUrl)
+        .then(res => res.text())
+        .then(result => {
+            if (result.trim() === "SUCCESS") {
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userPhone', phone);
+                // 인증 성공시에만 점검 화면으로 이동!
+                startInspection(name, phone);
+            } else {
+                alert("❌ 등록되지 않은 사용자입니다. 관리자에게 문의하세요.");
+                if(btn) btn.innerText = "인증 및 점검 시작";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            // 네트워크 오류 시 기존 정보가 있다면 일단 통과
+            if(localStorage.getItem('userName')) {
+                startInspection(name, phone);
+            } else {
+                alert("🌐 연결이 불안정합니다. 다시 시도해주세요.");
+                if(btn) btn.innerText = "인증 및 점검 시작";
+            }
+        });
+    }	
+
+    // 4. 점검 시작 및 데이터 로딩 분기
     function startInspection(name, phone) {
         document.getElementById('step-auth').classList.add('hidden');
         
@@ -281,7 +319,7 @@
         }
     }
 
-    // 4. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
+    // 5. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
     function loadFacilityConfig(targetFid) {
         const titleEl = document.getElementById('facility-title');
         const categoryEl = document.getElementById('facility-category');
@@ -311,7 +349,7 @@
             });
     }
 
-    // 5. 유동적 항목 생성 로직
+    // 6. 유동적 항목 생성 로직
     function renderDynamicForm(configString) {
         if(!configString) return;
         const items = configString.split(';'); 
@@ -338,7 +376,7 @@
         });
     }
 
-     // 6. 사진 추가 및 압축 (기존 로직 최적화)
+     // 7. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
         if(photoCount >= 3) { alert("사진은 4장까지만 가능합니다."); return; }
 
@@ -403,7 +441,7 @@
             photoCount--;
         }
     }
-    // 7. QR 코드 스캔
+    // 8. QR 코드 스캔
 let html5QrCode;
 
 function openScanner() {
@@ -484,7 +522,7 @@ function closeScanner() {
           });
       }
 
-   // 8. 백엔드 전송 (20개 항목 배열 맞춤형)
+   // 9. 백엔드 전송 (20개 항목 배열 맞춤형)
     function submitToSheet() {
         const worker = localStorage.getItem('userName') || "미인증";
         const memo = document.getElementById('memo').value;
