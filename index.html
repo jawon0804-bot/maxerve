@@ -473,17 +473,24 @@ function closeScanner() {
                     values: finalValues  // 20개로 정렬된 점검 결과
                 })
             })
-            .then(() => {
-                // 성공 화면 처리 [기존 로직 유지]
-                alert("성공적으로 전송되었습니다!");
-                location.reload(); 
-            })
-            .catch(err => {
-                alert("❌ 전송 실패: " + err);
-                btn.disabled = false;
-            });
-        }
-    }
+            .then(result => {
+			    if (result.trim() === "SUCCESS") {
+			        alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
+			        
+			        // 1. 중복 클릭 방지를 위해 버튼 비활성화
+			        document.getElementById('submit-btn').disabled = true;
+			        document.getElementById('submit-btn').innerText = "전송 완료";
+			
+			        // 2. 창 닫기 시도 (NFC/웹앱 환경)
+			        setTimeout(function() {
+			            window.close(); // 일반적인 창 닫기
+			            self.close();   // 일부 브라우저 대응
+			            
+			            // 만약 창이 안 닫히면 안내 문구 출력
+			            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>점검이 완료되었습니다.<br>이 창을 닫아주세요.</h2>";
+			        }, 1000); // 1초 뒤에 닫기
+			    }
+			});
 </script>
 </body>
 </html>
