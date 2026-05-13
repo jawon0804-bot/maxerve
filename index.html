@@ -231,136 +231,91 @@
     </form>
 
     <script>
-    // 1. 설정 및 전역 변수 (기존과 동일)
+    <script>
+    // 1. 설정 및 전역 변수
     const urlParams = new URLSearchParams(window.location.search);
     let fId = urlParams.get('id') || urlParams.get('fId') || ""; 
     let photoCount = 0;
     const photoData = [];
 
-    // 과장님의 구글 웹앱 주소 (이걸로 데이터를 당겨옵니다)
+    // 과장님의 구글 웹앱 주소 (새 배포 후 URL 확인 필수!)
     const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";    
     const webAppUrl = "https://script.google.com/macros/s/AKfycbzwMeYJ-2O9sw3QY6zty3aOkUr-TtiuZrzi5qe_o9MgA7JlGYcR6TdD8NJm9xeqK6-0ug/exec"; 
 
-    // 2. 통합 로드 함수 (중복 제거)
+    // 2. 페이지 로드 시 실행
     window.onload = function() {
         const savedName = localStorage.getItem('userName');
         const savedPhone = localStorage.getItem('userPhone');
 
-	    if (savedName && savedPhone) {
-	        // 이미 로그인 정보가 있다면 입력창에 채워주고 바로 시작
-	        const nameInput = document.getElementById('loginName');
-	        const phoneInput = document.getElementById('loginPhone');
-	        if(nameInput) nameInput.value = savedName;
-	        if(phoneInput) phoneInput.value = savedPhone;
+        if (savedName && savedPhone) {
+            // 이미 로그인 정보가 있다면 입력창에 채워주고 바로 시작
+            const nameInput = document.getElementById('loginName');
+            const phoneInput = document.getElementById('loginPhone');
+            if(nameInput) nameInput.value = savedName;
+            if(phoneInput) phoneInput.value = savedPhone;
 
-	        startInspection(savedName, savedPhone);
-	    } else {
-	        // 정보가 없으면 인증창 노출
-	        document.getElementById('step-auth').classList.remove('hidden');
-	    }
-	};
-	
-	// 3. 점검 시작 및 데이터 로딩 분기
-	function startInspection(name, phone) {
-	    document.getElementById('step-auth').classList.add('hidden');
-	    
-	    if (fId) {
-	        // URL에 ID가 있으면 바로 점검표 로드 (fetch 방식 호출)
-	        loadFacilityConfig(fId);
-	    } else {
-	        // ID가 없으면 스캔 대기 화면 노출
-	        document.getElementById('step-scan').classList.remove('hidden');
-	        initScanner(); // 스캐너 시작 함수 (있으시다면)
-	    }
-	}
-	
-	// 4. [핵심 수정] 깃허브에서도 작동하는 데이터 로드 함수
-	function loadFacilityConfig(targetFid) {
-	    const titleEl = document.getElementById('facility-title');
-	    const categoryEl = document.getElementById('facility-category');
-	    
-	    if(titleEl) titleEl.innerText = "🔄 데이터를 불러오는 중...";
-	
-	    // google.script.run 대신 fetch 사용!
-	    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
-	        .then(res => res.json())
-	        .then(response => {
-	            if (response) {
-	                document.getElementById('step-scan').classList.add('hidden');
-	                document.getElementById('inspection-form').classList.remove('hidden');
-	                
-	                // B열, C열 매칭 교정 반영
-	                if(categoryEl) categoryEl.innerText = "[" + response.category + "]";
-	                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-	                
-	                renderDynamicForm(response.configString);
-	            } else {
-	                alert("❌ 등록되지 않은 설비 ID입니다.");
-	            }
-	        })
-	        .catch(err => {
-	            console.error("로드 에러:", err);
-	            alert("통신 에러가 발생했습니다. 구글 앱 배포 상태를 확인하세요.");
-	        });
-	}
-    
-	// 5. 화면 전환 및 데이터 로드 핵심 함수
+            startInspection(savedName, savedPhone);
+        } else {
+            // 정보가 없으면 인증창 노출
+            document.getElementById('step-auth').classList.remove('hidden');
+        }
+    };
+
+    // 3. 점검 시작 및 데이터 로딩 분기
     function startInspection(name, phone) {
         document.getElementById('step-auth').classList.add('hidden');
         
+        // 상단 인사말 및 작업자 정보 표시
         const welcomeName = document.querySelector('#step-scan h2');
         if (welcomeName) welcomeName.innerText = "안녕하세요, " + name + " 님!";
         
         const workerDisplay = document.getElementById('display-worker');
         if(workerDisplay) workerDisplay.innerText = name + "(" + phone + ")";
-        
+
         let cleanFId = decodeURIComponent(fId).trim();
 
         if (!cleanFId || cleanFId === "" || cleanFId === "미등록설비") {
             document.getElementById('step-scan').classList.remove('hidden');
             document.getElementById('inspection-form').classList.add('hidden');
         } else {
-            // [수정 포인트] 시트에서 설비 정보를 가져와서 점검표를 그립니다.
+            // [핵심] fetch 방식으로 데이터 로드 실행
             loadFacilityConfig(cleanFId);
         }
     }
 
-    // [새로 추가] 구글 시트에서 설계도를 가져오는 함수
+    // 4. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
     function loadFacilityConfig(targetFid) {
-    // 1. HTML 요소들을 변수에 담기 (주소 찾기)
-    const titleEl = document.getElementById('facility-title');     // <h3> 점검표 이름 자리
-    const categoryEl = document.getElementById('facility-category'); // <h4> 설비 분류 자리
-    
-    // 로딩 시작 시 메시지 표시
-    if(titleEl) titleEl.innerText = "🔄 점검표 로딩 중...";
-    if(categoryEl) categoryEl.innerText = "";
+        const titleEl = document.getElementById('facility-title');
+        const categoryEl = document.getElementById('facility-category');
+        
+        if(titleEl) titleEl.innerText = "🔄 데이터를 불러오는 중...";
 
-    google.script.run
-        .withSuccessHandler(function(response) {
-            if (response) {
-                // 인증/스캔 화면 숨기고 점검폼 노출 (과장님 기존 id 확인 필요)
-                document.getElementById('step-scan').classList.add('hidden');
-                document.getElementById('inspection-form').classList.remove('hidden');
-                
-                // 2. [데이터 매칭] 찾은 요소에 시트 데이터 꽂아넣기
-                // B열(설비분류) -> <h4> 자리에 출력
-                if(categoryEl) categoryEl.innerText = "[" + response.category + "]";
-                
-                // C열(점검표이름) -> <h3> 자리에 출력
-                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-                
-                // D열(설계도) -> 유동적 항목 생성 함수 실행
-                renderDynamicForm(response.configString);
-            } else {
-                alert("❌ 시트에 등록되지 않은 FID입니다.");
-                if(titleEl) titleEl.innerText = "설비 정보 없음";
-            }
-        })
-        .getFacilityInfo(targetFid); // Code.gs의 함수 호출
-	}
+        // google.script.run 대신 fetch를 사용합니다.
+        fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+            .then(res => res.json())
+            .then(response => {
+                if (response) {
+                    document.getElementById('step-scan').classList.add('hidden');
+                    document.getElementById('inspection-form').classList.remove('hidden');
+                    
+                    if(categoryEl) categoryEl.innerText = "[" + response.category + "]";
+                    if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+                    
+                    renderDynamicForm(response.configString);
+                } else {
+                    alert("❌ 등록되지 않은 설비 ID입니다.");
+                    if(titleEl) titleEl.innerText = "설비 정보 없음";
+                }
+            })
+            .catch(err => {
+                console.error("로드 에러:", err);
+                alert("통신 에러가 발생했습니다. 구글 앱 배포(doGet 수정)를 확인하세요.");
+            });
+    }
 
-    // [이 과장님의 유동적 항목 생성 로직 보완]
+    // 5. 유동적 항목 생성 로직
     function renderDynamicForm(configString) {
+        if(!configString) return;
         const items = configString.split(';'); 
         const container = document.getElementById('dynamic-items');
         container.innerHTML = "";
@@ -370,7 +325,6 @@
             const [name, type, options] = item.split('|');
     
             let inputTag = "";
-            // class="check-input"을 꼭 넣어줘야 나중에 전송할 때 데이터를 긁어옵니다.
             if (type === 'select') {
                 const optHtml = options.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
                 inputTag = `<select class="check-input">${optHtml}</select>`;
