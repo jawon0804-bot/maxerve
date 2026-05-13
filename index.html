@@ -114,121 +114,40 @@
 </div>
 
     <form id="inspection-form" class="hidden">
-        <div class="card" id="form-container">
-            <div id="facility-info" class="status-tag">설비 인식 중...</div>
-            <h1 id="facility-title">점검표</h1>
-            <p style="font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 4px;">
-              <span style="font-size: 1.3rem; line-height: 1; margin-bottom: 2px;">🪪</span> 
-              <span>점검자: <span id="display-worker"></span></span>
-            </p>
-            <hr>
+    <div class="card" id="form-container">
+        <!-- 상단 상태 표시 (카테고리 들어갈 자리) -->
+        <div id="facility-category" class="status-tag">설비 인식 중...</div>
+        
+        <!-- 점검표 메인 제목 (설비명이 들어갈 자리) -->
+        <h1 id="facility-title">점검표 로딩 중...</h1>
+        
+        <p style="font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 1.3rem; line-height: 1; margin-bottom: 2px;">🪪</span> 
+            <span>점검자: <span id="display-worker"></span></span>
+        </p>
+        <hr>
+        
+        <!-- ✅ 시트에서 가져온 점검 항목들이 실제로 그려지는 "그릇" -->
+        <div id="dynamic-items">
+            <!-- 자바스크립트가 여기에 <div>항목들</div>을 채워 넣습니다 -->
+        </div>
 
-            <!-- [전기설비 섹션] -->
-        <div id="sec-전기_01" class="hidden section-content">
-        <h2>수변전 점검일지</h2>
-
-        <h3>🕘 점검표 기록 시간</h3>
-        <div class="item1">
-            <label>🔹시간 설정🔹</label>
-            <select name="time"><option value="null">Null / Empty</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
-        </div>    
-           
-        <h3>1. HV-4 MAIN VCB</h3>
-          <div class="item"><label>전압 (KV)</label><input type="number" name="vcb_kv" placeholder=" HV-4 MAIN VCB_KV" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="vcb_a_r" placeholder=" HV-4 MAIN VCB_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="vcb_a_s" placeholder=" HV-4 MAIN VCB_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="vcb_a_t" placeholder=" HV-4 MAIN VCB_T" required></div>
-          <div class="item"><label>전력 (KW)</label><input type="number" name="vcb_kw" placeholder=" HV-4 MAIN VCB_KW" required></div>
-          <div class="item"><label>역률 (COS)</label><input type="number" name="vcb_cos" placeholder=" HV-4 MAIN VCB_COS" required></div>
-
-        <h3>2. LV1</h3>
-          <div class="item"><label>전압 (V)</label><input type="number" name="lv1_v" placeholder="V" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="lv1_a_r" placeholder="LV1_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="lv1_a_s" placeholder="LV1_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="lv1_a_t" placeholder="LV1_T" required></div>
-
-        <h3>3. LV2</h3>
-          <div class="item"><label>전압 (V)</label><input type="number" name="lv2_v" placeholder="V" required></div>
-          <div class="item"><label>전류 (A) - R</label><input type="number" name="lv2_a_r" placeholder="LV1_R" required></div>
-          <div class="item"><label>전류 (A) - S</label><input type="number" name="lv2_a_s" placeholder="LV1_S" required></div>
-          <div class="item"><label>전류 (A) - T</label><input type="number" name="lv2_a_t" placeholder="LV1_T" required></div>
-     
-</div>
-
-         <div id="sec-전기_02" class="hidden section-content">
-        <h2>수변전 점검일지</h2>
-
-        <h3>🕘 점검표 기록 시간</h3>
+        <hr>
+        <h2>📝 특이사항</h2>
         <div class="item">
-            <label>🔹시간 설정🔹</label>
-            <select name="time"><option value="null">Null / Empty</option><option value="10:00">10:00</option><option value="15:00">15:00</option><option value="20:00">20:00</option><option value="24:00">24:00</option></select>
+            <label>📷 현장 사진 (점검, 위험물, 파손 등)</label>
+            <div id="photo-preview-container"></div>
+            <button type="button" onclick="addPhoto()" class="btn-photo">📸 사진 촬영 및 추가 (최대 3장)</button>
         </div>
         
-        <h3>1. TR1 [750KVA]</h3>
-        <div class="item"><label>온도 (℃)</label><input type="number" name="tr1_temp" placeholder="TR1_℃" required></div>
         <div class="item">
-            <label>냄새</label>
-            <select name="tr1_smell"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-        <div class="item">
-            <label>소음</label>
-            <select name="tr1_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
+            <label>특이사항 메모</label>
+            <textarea id="memo" rows="3" placeholder="내용을 입력하세요."></textarea>
         </div>
 
-        <h3>2. TR2 [750KVA]</h3>
-        <div class="item"><label>온도 (℃)</label><input type="number" name="tr2_temp" placeholder="TR2_℃" required></div>
-        <div class="item">
-            <label>냄새</label>
-            <select name="tr2_smell"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-        <div class="item">
-            <label>소음</label>
-            <select name="tr2_noise"><option value="정상">정상</option><option value="이상">이상</option></select>
-        </div>
-
-        <h3>3. LVR (정류기)</h3>
-        <div class="item"><label>AC_RS</label><input type="number" name="lvr_rs" placeholder="LVR_RS" required></div>
-        <div class="item"><label>AC_ST</label><input type="number" name="lvr_st" placeholder="LVR_ST" required></div>
-        <div class="item"><label>AC_TR</label><input type="number" name="lvr_tr" placeholder="LVR_TR" required></div>
-        <div class="item"><label>DC [V]</label><input type="number" name="lvr_dcv" placeholder="LVR_[V]" required></div>
-        <div class="item"><label>DC [A]</label><input type="number" name="lvr_dca" placeholder="LVR_[A]" required></div>
-        <div class="item">
-            <label>배터리</label>
-            <select name="lvr_bat"><option value="양호">양호</option><option value="이상">이상</option></select>
-        </div>
-        
-        <h3>4. 검침현황 (밤 12시)</h3>
-        <div class="item"><label>④ 현재 누적 주간 유효</label><input type="number" step="0.01" name="check_day" placeholder="소수점 두자리 까지" required></div>
-        <div class="item"><label>⑤ 현재 누적 저녁 유효</label><input type="number" step="0.01" name="check_evening" placeholder="소수점 두자리 까지" required></div>
-        <div class="item"><label>⑥ 현재 누적 심야 유효</label><input type="number" step="0.01" name="check_night" placeholder="소수점 두자리 까지" required></div>
-        
-</div>
-            
-            <!-- ✅서버에서 항목 호출 -->
-            <div id="inspection-form" class="hidden">
-                <h4 id="facility-title">점검표 로딩 중...</h4>
-                <h3 id="facility-title" style="margin-top: 0;"></h3>
-                <div id="dynamic-items">
-                    <!-- 여기에 시트에서 가져온 점검 항목들이 자동으로 들어갑니다! -->
-                </div>
-    
-             <!-- 메모 및 사진 등록 섹션 동일 사용 -->
-            <hr>
-            <h2>📝 특이사항</h2>
-            <div class="item">
-                <label>📷 현장 사진 (점검, 위험물, 파손 등)</label>
-                <div id="photo-preview-container"></div>
-                <button type="button" onclick="addPhoto()" class="btn-photo">📸 사진 촬영 및 추가 (최대 3장)</button>
-            </div>
-            <div class="item">
-                <label>특이사항 메모</label>
-                <textarea id="memo" rows="3" placeholder="내용을 입력하세요."></textarea>
-            </div>
-
-            <button type="button" onclick="submitToSheet()" id="submit-btn" class="btn-submit">✅ 점검 완료 및 전송</button>
-        </div>
-           
-    </form>
+        <button type="button" onclick="submitToSheet()" id="submit-btn" class="btn-submit">✅ 점검 완료 및 전송</button>
+    </div>
+</form>
     <script>
     // 1. 설정 및 전역 변수
     const urlParams = new URLSearchParams(window.location.search);
