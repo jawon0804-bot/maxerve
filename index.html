@@ -315,7 +315,7 @@
 	                const trimmedText = text.trim();
 	
 	                // ✅ 1. 순찰 기록 완료 메시지인 경우 (텍스트 응답)
-	                if (trimmedText.includes("✅")) {
+	                if (trimmedText.includes("✅ ")) {
 	                    alert(trimmedText); // "✅ + displayMsg" 알림창
 	                    
 	                    // [핵심] 주소창에서 ?fid=... 파라미터를 강제로 제거하여 무한 루프를 방지합니다.
