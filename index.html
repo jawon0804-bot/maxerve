@@ -316,7 +316,7 @@
 	
 	                // ✅ 1. 순찰 기록 완료 메시지인 경우 (텍스트 응답)
 	                if (trimmedText.includes("✅")) {
-	                    alert(trimmedText); // "✅ 순찰 기록 완료" 알림창
+	                    alert(trimmedText); // "✅ + displayMsg" 알림창
 	                    
 	                    // [핵심] 주소창에서 ?fid=... 파라미터를 강제로 제거하여 무한 루프를 방지합니다.
 	                    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
