@@ -340,63 +340,74 @@
 
     // 6. 유동적 항목 생성 로직
    function renderDynamicForm(configString) {
-		if(!configString) return;
-		const items = configString.split(';'); 
-		const container = document.getElementById('dynamic-items');
-		container.innerHTML = "";
-		
-		items.forEach(item => {
-			if(!item.trim()) return;
-			
-			const [name, type, placeholderText] = item.split('|');
-		    const hint = placeholderText ? placeholderText : "내용을 입력하세요";
-		    
-		    // ⭐ 중요: 여기서 labelTag를 기본적으로 제목이 나오게 설정합니다.
-		    let labelTag = `<label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>`;
-		    let inputTag = "";
-		
-		    // 1. 구분선(line) 처리
-		    if (type && type.trim() === 'line') {
-		        container.innerHTML += `<hr style="border:0; height:2px; background:#007bff; margin:25px 0;">`;
-		        return; 
-		    }
-		
-		    // 2. 타입별 분기 처리
-		    if (type === 'select') {
-		        // ⭐ 박스 위 제목 제거
-		        labelTag = ""; 
-		        const options = placeholderText ? placeholderText.split(',') : [];
-		        const optHtml = options.map(o => `<option value="${o}">${o}</option>`).join('');
-		        
-		        // ⭐ 박스 안에도 제목 없이 깔끔하게 "선택"만 나오게 수정
-		        inputTag = `<select class="check-input">
-		                        <option value="">선택</option>
-		                        ${optHtml}
-		                    </select>`;
-		    } 
-		    else if (type === 'info') {
-		        labelTag = ""; 
-		        inputTag = `<div style="padding: 5px 0; color: #666; font-size: 0.95em; line-height: 1.5;">
-		                        ℹ️ <strong>${name}</strong>: ${hint}
-		                    </div>`;
-		    } 
-		    else if (type === 'number') {
-		        // 숫자는 제목이 있어야 하므로 위에서 설정한 labelTag가 그대로 나갑니다.
-		        inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
-		    } 
-		    else {
-		        // 일반 텍스트
-		        inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
-		    }
-		    
-		    // 3. 최종 조립
-		    container.innerHTML += `
-		        <div class="row" style="margin-bottom:15px;">
-		            ${labelTag}
-		            ${inputTag}
-		        </div>`;
-		});
-		}
+	    if(!configString) return;
+	    const items = configString.split(';'); 
+	    const container = document.getElementById('dynamic-items');
+	    container.innerHTML = "";
+	
+	    items.forEach(item => {
+	        if(!item.trim()) return;
+	        
+	        const [name, type, placeholderText] = item.split('|');
+	        const hint = placeholderText ? placeholderText : "내용을 입력하세요";
+	        
+	        // [설명] 제목 태그를 미리 만듭니다. (모든 항목의 기본값)
+	        let labelTag = `<label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>`;
+	        let inputTag = "";
+	
+	        // 1. 구분선(line) 처리
+	        if (type && type.trim() === 'line') {
+	            container.innerHTML += `<hr style="border:0; height:2px; background:#007bff; margin:25px 0;">`;
+	            return; 
+	        }
+	
+	        // 2. 타입별 분기 처리
+	        if (type === 'select') {
+	            /* 
+	               [수정 포인트] 
+	               이전 코드에 있던 labelTag = ""; 를 삭제했습니다. 
+	               그래야 '소화기...' 같은 긴 제목이 박스 위에 정상적으로 출력됩니다.
+	            */
+	            
+	            // 시트에서 가져온 옵션들(양호,불량 등)을 <option> 태그로 변환합니다.
+	            const options = placeholderText ? placeholderText.split(',') : [];
+	            const optHtml = options.map(o => `<option value="${o}">${o}</option>`).join('');
+	            
+	            /* 
+	               [설명] 
+	               박스 첫 줄은 무조건 "선택"으로 표시합니다. 
+	               여기에 ${name}을 넣지 않아서 박스 안이 깔끔해집니다.
+	            */
+	            inputTag = `<select class="check-input">
+	                            <option value="">선택</option>
+	                            ${optHtml}
+	                        </select>`;
+	        } 
+	        else if (type === 'info') {
+	            // info는 박스 자체가 안내문이므로 위쪽 제목(labelTag)을 비웁니다.
+	            labelTag = ""; 
+	            inputTag = `<div style="padding: 5px 0; color: #666; font-size: 0.95em; line-height: 1.5;">
+	                            ℹ️ <strong>${name}</strong>: ${hint}
+	                        </div>`;
+	        } 
+	        else if (type === 'number') {
+	            // 숫자는 위에서 만든 labelTag(제목)가 그대로 유지됩니다.
+	            inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
+	        } 
+	        else {
+	            // 일반 텍스트도 제목이 그대로 노출됩니다.
+	            inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
+	        }
+	        
+	        // 3. 최종 조립
+	        // 결정된 labelTag(제목)와 inputTag(입력창)를 한 줄로 합쳐 화면에 뿌립니다.
+	        container.innerHTML += `
+	            <div class="row" style="margin-bottom:15px;">
+	                ${labelTag}
+	                ${inputTag}
+	            </div>`;
+	    });
+	}
 
      // 7. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
