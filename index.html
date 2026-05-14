@@ -105,6 +105,36 @@
 		    color: #333;
 		    font-size: 0.95rem;
 		}
+
+		#loading-layer {
+		    position: fixed;
+		    top: 0; left: 0;
+		    width: 100%; height: 100%;
+		    background: rgba(255, 255, 255, 0.9); /* 약간 투명한 하얀 배경 */
+		    display: flex;
+		    flex-direction: column;
+		    justify-content: center;
+		    align-items: center;
+		    z-index: 9999; /* 최상단에 위치 */
+		}
+		
+		/* 뱅글뱅글 돌아가는 스피너 애니메이션 */
+		.spinner {
+		    width: 50px;
+		    height: 50px;
+		    border: 5px solid #f3f3f3;
+		    border-top: 5px solid #4285f4; /* 이 과장님이 좋아하시는 파란색 */
+		    border-radius: 50%;
+		    animation: spin 1s linear infinite;
+		    margin-bottom: 15px;
+		}
+		
+		@keyframes spin {
+		    0% { transform: rotate(0deg); }
+		    100% { transform: rotate(360deg); }
+		}
+		
+		.hidden { display: none !important; }
     
 	</style>
 </head>
@@ -144,6 +174,12 @@
     </div>
 </div>
 
+	<!-- 로딩 화면 레이어 -->
+	<div id="loading-layer">
+	    <div class="spinner"></div>
+	    <p>설비 정보를 불러오는 중입니다...</p>
+	</div>
+	
     <form id="inspection-form" class="hidden">
     <div class="card" id="form-container">
         <!-- 상단 상태 표시 (카테고리 들어갈 자리) -->
@@ -271,33 +307,45 @@
 
     // 5. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
     function loadFacilityConfig(targetFid) {
-        const titleEl = document.getElementById('facility-title');
-        const categoryEl = document.getElementById('facility-category');
-        
-        if(titleEl) titleEl.innerText = "🔄 데이터를 불러오는 중...";
+    const loading = document.getElementById('loading-layer');
+    if(loading) loading.classList.remove('hidden'); // 로딩 시작
 
-        // google.script.run 대신 fetch를 사용합니다.
-        fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
-            .then(res => res.json())
-            .then(response => {
-                if (response) {
-                    document.getElementById('step-scan').classList.add('hidden');
-                    document.getElementById('inspection-form').classList.remove('hidden');
-                    
-                    if(categoryEl) categoryEl.innerText = "[" + response.category + "]";
-                    if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-                    
+    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+        .then(res => res.json())
+        .then(response => {
+            console.log("받은 데이터:", response); // PC에서 F12로 확인용
+
+            if (response && response.facilityName) {
+                // 기존 입력 폼 보여주기
+                document.getElementById('step-scan').classList.add('hidden');
+                document.getElementById('inspection-form').classList.remove('hidden');
+                
+                const titleEl = document.getElementById('facility-title');
+                const categoryEl = document.getElementById('facility-category');
+                
+                if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
+                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+                
+                // 점검표 그리기 (여기서 에러나도 finally로 가도록 처리)
+                try {
                     renderDynamicForm(response.configString);
-                } else {
-                    alert("❌ 등록되지 않은 설비 ID입니다.");
-                    if(titleEl) titleEl.innerText = "설비 정보 없음";
+                } catch (e) {
+                    console.error("점검표 생성 에러:", e);
                 }
-            })
-            .catch(err => {
-                console.error("로드 에러:", err);
-                alert("통신 에러가 발생했습니다. 구글 앱 배포(doGet 수정)를 확인하세요.");
-            });
-    }
+            } else {
+                alert("❌ 등록되지 않은 설비 ID입니다. (ID: " + targetFid + ")");
+            }
+        })
+        .catch(err => {
+            console.error("통신 에러:", err);
+            alert("⚠️ 데이터 통신 중 오류가 발생했습니다.");
+        })
+        .finally(() => {
+            // ⭐ 무슨 일이 있어도 로딩창은 끈다!
+            console.log("로딩 종료");
+            if(loading) loading.classList.add('hidden');
+        });
+}
 
     // 6. 유동적 항목 생성 로직
     function renderDynamicForm(configString) {
