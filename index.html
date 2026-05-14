@@ -305,38 +305,53 @@
 
     // [5번] 데이터 로드 (수정됨: 통신 시점에만 로딩창 켜기)
     function loadFacilityConfig(targetFid) {
-        toggleLoading(true); // 이제 여기서 로딩창이 뜹니다!
-
-        setTimeout(() => {
-            fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
-                .then(res => res.json())
-                .then(response => {
-                    if (response && response.facilityName) {
-                        document.getElementById('step-scan').classList.add('hidden');
-                        document.getElementById('inspection-form').classList.remove('hidden');
-
-                        const titleEl = document.getElementById('facility-title');
-                        const categoryEl = document.getElementById('facility-category');
-                        if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
-                        if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-
-                        try {
-                            renderDynamicForm(response.configString);
-                            setTimeout(() => toggleLoading(false), 300);
-                        } catch (e) {
-                            toggleLoading(false);
-                        }
-                    } else {
-                        alert("❌ 등록되지 않은 설비 ID입니다.");
-                        toggleLoading(false);
-                    }
-                })
-                .catch(err => {
-                    alert("⚠️ 데이터 통신 중 오류가 발생했습니다.");
-                    toggleLoading(false);
-                });
-        }, 100); 
-    }
+	    toggleLoading(true);
+	
+	    setTimeout(() => {
+	        fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+	            .then(res => res.text()) // 1. 우선 텍스트 형식으로 받습니다.
+	            .then(text => {
+	                // ⭐ [추가] 만약 응답에 체크 표시(✅)가 있다면 자동 순찰 성공!
+	                if (text.includes("✅")) {
+	                    alert(text); // "✅ 순찰 기록 완료" 알림
+	                    toggleLoading(false);
+	                    // 스캔 화면 유지 또는 페이지 새로고침
+	                    location.reload(); 
+	                    return; 
+	                }
+	
+	                // 2. 체크 표시가 없다면 기존처럼 JSON으로 파싱하여 점검표를 그립니다.
+	                try {
+	                    const response = JSON.parse(text);
+	                    
+	                    if (response && response.facilityName) {
+	                        document.getElementById('step-scan').classList.add('hidden');
+	                        document.getElementById('inspection-form').classList.remove('hidden');
+	
+	                        const titleEl = document.getElementById('facility-title');
+	                        const categoryEl = document.getElementById('facility-category');
+	                        if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
+	                        if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+	
+	                        renderDynamicForm(response.configString);
+	                        setTimeout(() => toggleLoading(false), 300);
+	                    } else {
+	                        alert("❌ 등록되지 않은 설비 ID입니다.");
+	                        toggleLoading(false);
+	                    }
+	                } catch (e) {
+	                    console.error("JSON 파싱 에러:", e);
+	                    alert("⚠️ 데이터를 처리하는 중 오류가 발생했습니다.");
+	                    toggleLoading(false);
+	                }
+	            })
+	            .catch(err => {
+	                console.error("통신 에러:", err);
+	                alert("⚠️ 데이터 통신 중 오류가 발생했습니다.");
+	                toggleLoading(false);
+	            });
+	    }, 100); 
+	}
 
     // 6. 유동적 항목 생성 로직
    function renderDynamicForm(configString) {
