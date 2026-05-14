@@ -359,6 +359,10 @@
         
         // [수정] 세 번째 인자인 placeholder를 변수로 받습니다.
         const [name, type, placeholderText] = item.split('|');
+		if (type && type.trim() === 'line') {
+            container.innerHTML += `<hr style="border:0; height:1px; background:#ccc; margin:25px 0;">`;
+            return; // 아래 입력창 만드는 코드를 실행하지 않고 바로 다음 item으로 넘어갑니다.
+        }
         let inputTag = "";
         
         // 시트에 예시 문구가 없으면 기본값을 사용하게 설정
