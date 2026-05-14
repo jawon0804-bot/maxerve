@@ -301,30 +301,40 @@
 
     // 6. 유동적 항목 생성 로직
     function renderDynamicForm(configString) {
-        if(!configString) return;
-        const items = configString.split(';'); 
-        const container = document.getElementById('dynamic-items');
-        container.innerHTML = "";
+    if(!configString) return;
+    const items = configString.split(';'); 
+    const container = document.getElementById('dynamic-items');
+    container.innerHTML = "";
 
-        items.forEach(item => {
-            if(!item.trim()) return;
-            const [name, type, options] = item.split('|');
-    
-            let inputTag = "";
-            if (type === 'select') {
-                const optHtml = options.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
-                inputTag = `<select class="check-input">${optHtml}</select>`;
-            } else if (type === 'number') {
-                inputTag = `<input type="number" class="check-input" placeholder="숫자 입력">`;
-            } else if (type === 'time') {
-                inputTag = `<input type="time" class="check-input">`;
-            } else {
-                inputTag = `<input type="text" class="check-input" placeholder="내용 입력">`;
-            }
+    items.forEach(item => {
+        if(!item.trim()) return;
+        
+        // [수정] 세 번째 인자인 placeholder를 변수로 받습니다.
+        const [name, type, placeholderText] = item.split('|');
+        let inputTag = "";
+        
+        // 시트에 예시 문구가 없으면 기본값을 사용하게 설정
+        const hint = placeholderText ? placeholderText : "내용을 입력하세요";
 
-            container.innerHTML += `<div class="row"><label>${name}</label>${inputTag}</div>`;
-        });
-    }
+        if (type === 'select') {
+            // select의 경우 placeholderText 자리에 '양호,불량' 같은 옵션이 올 수 있으므로 기존 로직 유지
+            const optHtml = placeholderText.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
+            inputTag = `<select class="check-input"><option value="">-- 선택 (${name}) --</option>${optHtml}</select>`;
+        } else if (type === 'number') {
+            // 숫자 입력창에 시트에서 가져온 'V (예: 220)' 표시
+            inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
+        } else {
+            // 일반 텍스트창에 시트에서 가져온 예시 문구 표시
+            inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
+        }
+        
+        container.innerHTML += `
+            <div class="row" style="margin-bottom:15px;">
+                <label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>
+                ${inputTag}
+            </div>`;
+    });
+}
 
      // 7. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
@@ -447,42 +457,6 @@ function closeScanner() {
             history.pushState(null, null, location.href);
         }
     };
-
-    function renderDynamicForm(configString) {
-    if(!configString) return;
-    const items = configString.split(';'); 
-    const container = document.getElementById('dynamic-items');
-    container.innerHTML = "";
-
-    items.forEach(item => {
-        if(!item.trim()) return;
-        
-        // [수정] 세 번째 인자인 placeholder를 변수로 받습니다.
-        const [name, type, placeholderText] = item.split('|');
-        let inputTag = "";
-        
-        // 시트에 예시 문구가 없으면 기본값을 사용하게 설정
-        const hint = placeholderText ? placeholderText : "내용을 입력하세요";
-
-        if (type === 'select') {
-            // select의 경우 placeholderText 자리에 '양호,불량' 같은 옵션이 올 수 있으므로 기존 로직 유지
-            const optHtml = placeholderText.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
-            inputTag = `<select class="check-input"><option value="">-- 선택 (${name}) --</option>${optHtml}</select>`;
-        } else if (type === 'number') {
-            // 숫자 입력창에 시트에서 가져온 'V (예: 220)' 표시
-            inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
-        } else {
-            // 일반 텍스트창에 시트에서 가져온 예시 문구 표시
-            inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
-        }
-        
-        container.innerHTML += `
-            <div class="row" style="margin-bottom:15px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>
-                ${inputTag}
-            </div>`;
-    });
-}
 
    // 9. 백엔드 전송 (20개 항목 배열 맞춤형)
     function submitToSheet() {
