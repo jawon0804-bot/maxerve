@@ -7,6 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://unpkg.com/html5-qrcode"></script>
+	<script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --primary: #1a73e8; --success: #34a853; --warning: #f39c12; --bg: #f8f9fa; }
         body { font-family: 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; padding: 15px; color: #333; line-height: 1.6; }
@@ -34,7 +35,7 @@
             height: auto;        /* 가로 세로 비율 유지 */
         }
         /* 컨테이너: 내부 요소들을 세로로 세우고 가운데 정렬 */
-	.qr-button-container {
+	    .qr-button-container {
     	    display: flex;
             flex-direction: column;
             align-items: center;
@@ -177,7 +178,7 @@
 	<!-- 로딩 화면 레이어 -->
 	<div id="loading-layer" class="loading-layer hidden">
 	    <div class="spinner"></div>
-	    <p>please wait Loading data...</p>
+	    <p class="text-center mt-2 font-bold text-slate-600 animate-bounce">Loading data...</p>
 	</div>
 	
     <form id="inspection-form" class="hidden">
