@@ -312,51 +312,67 @@
     // 5. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
     function loadFacilityConfig(targetFid) {
 	    const loading = document.getElementById('loading-layer');
-	    if(loading) loading.classList.remove('hidden'); // 로딩 시작
-	
-	    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
-	        .then(res => res.json())
-	        .then(response => {
-	            if (response && response.facilityName) {
-	                // 1. 컨테이너들 스위칭
-	                document.getElementById('step-scan').classList.add('hidden');
-	                document.getElementById('inspection-form').classList.remove('hidden');
-	                
-	                const titleEl = document.getElementById('facility-title');
-	                const categoryEl = document.getElementById('facility-category');
-	                if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
-	                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-	
-	                // 2. 점검표 그리기 시작
-	                try {
-	                    renderDynamicForm(response.configString);
-	                    
-	                    // ⭐ [핵심] 점검표를 다 그린 '직후'에 로딩창을 끕니다.
-	                    // 만약 항목이 너무 많으면 setTimeout으로 0.1초 정도 여유를 주면 더 완벽합니다.
-	                    setTimeout(() => {
-	                        if(loading) {
-	                            loading.classList.add('hidden');
-	                            console.log("점검표 렌더링 완료 및 로딩 종료");
-	                        }
-	                    }, 100);
-	
-	                } catch (e) {
-	                    console.error("점검표 생성 에러:", e);
-	                    if(loading) loading.classList.add('hidden'); // 에러나도 꺼주긴 해야함
-	                }
-	            } else {
-	                alert("❌ 등록되지 않은 설비 ID입니다.");
-	                if(loading) loading.classList.add('hidden');
-	            }
-	        })
-	        .catch(err => {
-	            console.error("통신 에러:", err);
-	            alert("⚠️ 오류 발생");
-	            if(loading) loading.classList.add('hidden');
-	        });
 	    
-	    // ⭐ .finally() 안의 로딩 종료 코드는 삭제하세요! 
-	    // 위에서 상황에 맞게 끄도록 바꿨으니까요.
+	    // 1. 통신 전 로딩창 강제 출력
+	    if (loading) {
+	        loading.style.display = 'flex';
+	        loading.classList.remove('hidden');
+	    }
+	
+	    // 2. 브라우저가 로딩창을 그릴 여유(0.05초)를 주고 통신 시작
+	    setTimeout(() => {
+	        fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+	            .then(res => res.json())
+	            .then(response => {
+	                console.log("받은 데이터:", response);
+	
+	                if (response && response.facilityName) {
+	                    // 화면 전환 (스캔 화면 숨기고 점검표 보이기)
+	                    document.getElementById('step-scan').classList.add('hidden');
+	                    document.getElementById('inspection-form').classList.remove('hidden');
+	
+	                    // 상단 타이틀 및 카테고리 설정
+	                    const titleEl = document.getElementById('facility-title');
+	                    const categoryEl = document.getElementById('facility-category');
+	                    if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
+	                    if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+	
+	                    // 3. 점검표 생성 시도
+	                    try {
+	                        renderDynamicForm(response.configString);
+	                        
+	                        // ⭐ 화면 렌더링까지 끝난 후 0.3초 뒤에 로딩창 종료
+	                        setTimeout(() => {
+	                            if(loading) {
+	                                loading.style.display = 'none';
+	                                loading.classList.add('hidden');
+	                            }
+	                        }, 300);
+	
+	                    } catch (e) {
+	                        console.error("점검표 생성 에러:", e);
+	                        if(loading) {
+	                            loading.style.display = 'none';
+	                            loading.classList.add('hidden');
+	                        }
+	                    }
+	                } else {
+	                    alert("❌ 등록되지 않은 설비 ID입니다.");
+	                    if(loading) {
+	                        loading.style.display = 'none';
+	                        loading.classList.add('hidden');
+	                    }
+	                }
+	            })
+	            .catch(err => {
+	                console.error("통신 에러:", err);
+	                alert("⚠️ 데이터 통신 중 오류가 발생했습니다.");
+	                if(loading) {
+	                    loading.style.display = 'none';
+	                    loading.classList.add('hidden');
+	                }
+	            });
+	    }, 50); 
 	}
 
     // 6. 유동적 항목 생성 로직
@@ -585,6 +601,20 @@ function closeScanner() {
             });
 		}
 	}
+
+		// 로딩창 켜고 끄는 마스터 스위치
+    function toggleLoading(isVisible) {
+			    const loader = document.getElementById('loading-layer');
+			    if (!loader) return;
+			
+			    if (isVisible) {
+			        loader.style.display = 'flex'; // CSS 무시하고 강제로 보임
+			        loader.classList.remove('hidden');
+			    } else {
+			        loader.style.display = 'none'; // 강제로 숨김
+			        loader.classList.add('hidden');
+			    }
+			}
 </script>
 </body>
 </html>
