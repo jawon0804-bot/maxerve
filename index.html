@@ -239,6 +239,8 @@
             if(phoneInput) phoneInput.value = savedPhone;
 
             startInspection(savedName, savedPhone);
+			const loading = document.getElementById('loading-layer');
+        	if(loading) loading.classList.add('hidden');
         } else {
             // 정보가 없으면 인증창 노출
             document.getElementById('step-auth').classList.remove('hidden');
@@ -286,6 +288,8 @@
     // 4. 점검 시작 및 데이터 로딩 분기
     function startInspection(name, phone) {
         document.getElementById('step-auth').classList.add('hidden');
+		const loading = document.getElementById('loading-layer');
+	    if(loading) loading.classList.add('hidden');
         
         // 상단 인사말 및 작업자 정보 표시
         const welcomeName = document.querySelector('#step-scan h2');
