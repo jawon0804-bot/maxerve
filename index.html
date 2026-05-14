@@ -311,86 +311,94 @@
 
     // 5. [수정 완료] 깃허브에서도 작동하는 데이터 로드 함수 (중복 제거됨)
     function loadFacilityConfig(targetFid) {
-    const loading = document.getElementById('loading-layer');
-    if(loading) loading.classList.remove('hidden'); // 로딩 시작
-
-    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
-        .then(res => res.json())
-        .then(response => {
-            console.log("받은 데이터:", response); // PC에서 F12로 확인용
-
-            if (response && response.facilityName) {
-                // 기존 입력 폼 보여주기
-                document.getElementById('step-scan').classList.add('hidden');
-                document.getElementById('inspection-form').classList.remove('hidden');
-                
-                const titleEl = document.getElementById('facility-title');
-                const categoryEl = document.getElementById('facility-category');
-                
-                if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
-                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
-                
-                // 점검표 그리기 (여기서 에러나도 finally로 가도록 처리)
-                try {
-                    renderDynamicForm(response.configString);
-                } catch (e) {
-                    console.error("점검표 생성 에러:", e);
-                }
-            } else {
-                alert("❌ 등록되지 않은 설비 ID입니다. (ID: " + targetFid + ")");
-            }
-        })
-        .catch(err => {
-            console.error("통신 에러:", err);
-            alert("⚠️ 데이터 통신 중 오류가 발생했습니다.");
-        })
-        .finally(() => {
-            // ⭐ 무슨 일이 있어도 로딩창은 끈다!
-            console.log("로딩 종료");
-            if(loading) loading.classList.add('hidden');
-        });
-}
+	    const loading = document.getElementById('loading-layer');
+	    if(loading) loading.classList.remove('hidden'); // 로딩 시작
+	
+	    fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+	        .then(res => res.json())
+	        .then(response => {
+	            if (response && response.facilityName) {
+	                // 1. 컨테이너들 스위칭
+	                document.getElementById('step-scan').classList.add('hidden');
+	                document.getElementById('inspection-form').classList.remove('hidden');
+	                
+	                const titleEl = document.getElementById('facility-title');
+	                const categoryEl = document.getElementById('facility-category');
+	                if(categoryEl) categoryEl.innerText = "[" + (response.category || "기타") + "]";
+	                if(titleEl) titleEl.innerText = "📋 " + response.facilityName;
+	
+	                // 2. 점검표 그리기 시작
+	                try {
+	                    renderDynamicForm(response.configString);
+	                    
+	                    // ⭐ [핵심] 점검표를 다 그린 '직후'에 로딩창을 끕니다.
+	                    // 만약 항목이 너무 많으면 setTimeout으로 0.1초 정도 여유를 주면 더 완벽합니다.
+	                    setTimeout(() => {
+	                        if(loading) {
+	                            loading.classList.add('hidden');
+	                            console.log("점검표 렌더링 완료 및 로딩 종료");
+	                        }
+	                    }, 100);
+	
+	                } catch (e) {
+	                    console.error("점검표 생성 에러:", e);
+	                    if(loading) loading.classList.add('hidden'); // 에러나도 꺼주긴 해야함
+	                }
+	            } else {
+	                alert("❌ 등록되지 않은 설비 ID입니다.");
+	                if(loading) loading.classList.add('hidden');
+	            }
+	        })
+	        .catch(err => {
+	            console.error("통신 에러:", err);
+	            alert("⚠️ 오류 발생");
+	            if(loading) loading.classList.add('hidden');
+	        });
+	    
+	    // ⭐ .finally() 안의 로딩 종료 코드는 삭제하세요! 
+	    // 위에서 상황에 맞게 끄도록 바꿨으니까요.
+	}
 
     // 6. 유동적 항목 생성 로직
     function renderDynamicForm(configString) {
-    if(!configString) return;
-    const items = configString.split(';'); 
-    const container = document.getElementById('dynamic-items');
-    container.innerHTML = "";
-
-    items.forEach(item => {
-        if(!item.trim()) return;
-        
-        // [수정] 세 번째 인자인 placeholder를 변수로 받습니다.
-        const [name, type, placeholderText] = item.split('|');
-		if (type && type.trim() === 'line') {
-            container.innerHTML += `<hr style="border:0; height:2px; background:#007bff; margin:25px 0;">`;
-            return; // 아래 입력창 만드는 코드를 실행하지 않고 바로 다음 item으로 넘어갑니다.
-        }
-        let inputTag = "";
-        
-        // 시트에 예시 문구가 없으면 기본값을 사용하게 설정
-        const hint = placeholderText ? placeholderText : "내용을 입력하세요";
-
-        if (type === 'select') {
-            // select의 경우 placeholderText 자리에 '양호,불량' 같은 옵션이 올 수 있으므로 기존 로직 유지
-            const optHtml = placeholderText.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
-            inputTag = `<select class="check-input"><option value="">-- 선택 (${name}) --</option>${optHtml}</select>`;
-        } else if (type === 'number') {
-            // 숫자 입력창에 시트에서 가져온 'V (예: 220)' 표시
-            inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
-        } else {
-            // 일반 텍스트창에 시트에서 가져온 예시 문구 표시
-            inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
-        }
-        
-        container.innerHTML += `
-            <div class="row" style="margin-bottom:15px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>
-                ${inputTag}
-            </div>`;
-    });
-}
+	    if(!configString) return;
+	    const items = configString.split(';'); 
+	    const container = document.getElementById('dynamic-items');
+	    container.innerHTML = "";
+	
+	    items.forEach(item => {
+	        if(!item.trim()) return;
+	        
+	        // [수정] 세 번째 인자인 placeholder를 변수로 받습니다.
+	        const [name, type, placeholderText] = item.split('|');
+			if (type && type.trim() === 'line') {
+	            container.innerHTML += `<hr style="border:0; height:2px; background:#007bff; margin:25px 0;">`;
+	            return; // 아래 입력창 만드는 코드를 실행하지 않고 바로 다음 item으로 넘어갑니다.
+	        }
+	        let inputTag = "";
+	        
+	        // 시트에 예시 문구가 없으면 기본값을 사용하게 설정
+	        const hint = placeholderText ? placeholderText : "내용을 입력하세요";
+	
+	        if (type === 'select') {
+	            // select의 경우 placeholderText 자리에 '양호,불량' 같은 옵션이 올 수 있으므로 기존 로직 유지
+	            const optHtml = placeholderText.split(',').map(o => `<option value="${o}">${o}</option>`).join('');
+	            inputTag = `<select class="check-input"><option value="">-- 선택 (${name}) --</option>${optHtml}</select>`;
+	        } else if (type === 'number') {
+	            // 숫자 입력창에 시트에서 가져온 'V (예: 220)' 표시
+	            inputTag = `<input type="number" class="check-input" placeholder="${hint}">`;
+	        } else {
+	            // 일반 텍스트창에 시트에서 가져온 예시 문구 표시
+	            inputTag = `<input type="text" class="check-input" placeholder="${hint}">`;
+	        }
+	        
+	        container.innerHTML += `
+	            <div class="row" style="margin-bottom:15px;">
+	                <label style="display:block; font-weight:bold; margin-bottom:5px;">${name}</label>
+	                ${inputTag}
+	            </div>`;
+	    });
+	}
 
      // 7. 사진 추가 및 압축 (기존 로직 최적화)
     function addPhoto() {
