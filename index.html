@@ -177,7 +177,7 @@
             <h1 id="facility-title">점검표 로딩 중...</h1>
             
                 <p style="font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 1.8rem; line-height: 1; margin-bottom: 10px;">🪪</span> 
+                    <span style="font-size: 1.5rem; line-height: 1; margin-bottom: 10px;">🪪</span> 
                     <span>점검자: <span id="display-worker"></span></span>
                 </p>
             <hr class="hr-dotted">
@@ -283,7 +283,7 @@
 			    // 제목 텍스트 및 크기 조절 (기존 코드 유지)
 			    const titleEl = document.getElementById('facility-title');
 			    if (titleEl) {
-			        titleEl.innerText = "📋 " + response.facilityName;
+			        titleEl.innerText = `<span class="title-emoji" style="font-size: 1.5em; vertical-align: middle; margin-right: 5px;">📋</span> ${response.facilityName}`;
 			        titleEl.style.setProperty('font-size', '1.8rem', 'important');
 			        
 			        if (titleEl.offsetHeight > 55) { 
