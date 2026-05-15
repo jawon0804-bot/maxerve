@@ -282,14 +282,25 @@
 			
 			    // 제목 텍스트 및 크기 조절 (기존 코드 유지)
 			    const titleEl = document.getElementById('facility-title');
-			    if (titleEl) {
-			        titleEl.innerHTML = `<span class="title-emoji" style="font-size: 1.5em; vertical-align: middle; margin-right: 5px;">📋</span> ${response.facilityName}`;
-			        titleEl.style.setProperty('font-size', '1.8rem', 'important');
-			        
-			        if (titleEl.offsetHeight > 55) { 
-			            titleEl.style.setProperty('font-size', '1.1rem', 'important');
-			        }
-			    }
+
+				if (titleEl) {
+				    // 1. Flex 구조로 변경: 이모티콘과 텍스트 영역을 분리
+				    titleEl.style.display = 'flex';
+				    titleEl.style.alignItems = 'flex-start'; // 위쪽 정렬 (중앙 정렬은 'center')
+				
+				    titleEl.innerHTML = `
+				        <span style="font-size: 1.5em; line-height: 1.2; margin-right: 8px; flex-shrink: 0;">📋</span>
+				        <span class="text-content" style="word-break: keep-all;">${response.facilityName}</span>
+				    `;
+				    
+				    // 2. 기본 크기 설정
+				    titleEl.style.setProperty('font-size', '1.5rem', 'important');
+				    
+				    // 3. 높이 체크 로직
+				    if (titleEl.offsetHeight > 55) { 
+				        titleEl.style.setProperty('font-size', '1.2rem', 'important');
+				    }
+				}
     
 			    renderDynamicForm(response.configString);
 			    setTimeout(() => toggleLoading(false), 300);
