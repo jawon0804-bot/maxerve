@@ -255,8 +255,21 @@
                 document.getElementById('step-scan').classList.add('hidden');
                 document.getElementById('inspection-form').classList.remove('hidden');
                 
-                document.getElementById('facility-category').innerText = `[${response.category || "기타"}]`;
-                document.getElementById('facility-title').innerText = "📋 " + response.facilityName;
+                const titleEl = document.getElementById('facility-title');
+		        if (titleEl) {
+		            // 1. 일단 제목을 넣습니다 (기존 한 줄 코드의 역할)
+		            titleEl.innerText = "📋 " + response.facilityName;
+		            
+		            // 2. 일단 기본 크기(1.5rem)를 먹여봅니다.
+		            titleEl.style.setProperty('font-size', '1.5rem', 'important');
+		            
+		            // 3. 찰나의 순간에 높이를 측정합니다. (offsetHeight 사용)
+		            // 1.5rem일 때 2줄이 되면 높이가 보통 50~60px을 넘깁니다.
+		            if (titleEl.offsetHeight > 55) { 
+		                // 2줄 이상이면 글자 크기를 1.1로 확 줄입니다.
+		                titleEl.style.setProperty('font-size', '1.1rem', 'important');
+		            }
+		        }
                 
                 renderDynamicForm(response.configString);
                 setTimeout(() => toggleLoading(false), 300);
