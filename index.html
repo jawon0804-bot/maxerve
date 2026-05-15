@@ -284,21 +284,23 @@
 			    const titleEl = document.getElementById('facility-title');
 
 				if (titleEl) {
-				    // 1. Flex 구조로 변경: 이모티콘과 텍스트 영역을 분리
-				    titleEl.style.display = 'flex';
-				    titleEl.style.alignItems = 'flex-start'; // 위쪽 정렬 (중앙 정렬은 'center')
+				    // 1. 부모 요소 스타일 강제 초기화 및 Flex 적용
+				    titleEl.style.cssText = `
+				        display: flex !important;
+				        align-items: flex-start !important;
+				        font-size: 1.5rem !important;
+				        line-height: 1.2 !important;
+				    `;
 				
+				    // 2. 구조 재설계 (이모티콘과 텍스트를 완전히 분리)
 				    titleEl.innerHTML = `
-				        <span style="font-size: 1.5em; line-height: 1.2; margin-right: 8px; flex-shrink: 0;">📋</span>
-				        <span class="text-content" style="word-break: keep-all;">${response.facilityName}</span>
+				        <span style="font-size: 1.5em; flex-shrink: 0; margin-right: 8px; display: inline-block;">📋</span>
+				        <span style="flex: 1; word-break: break-all; display: inline-block;">${response.facilityName}</span>
 				    `;
 				    
-				    // 2. 기본 크기 설정
-				    titleEl.style.setProperty('font-size', '1.5rem', 'important');
-				    
-				    // 3. 높이 체크 로직
+				    // 3. 높이 체크 로직 (기존 로직 유지)
 				    if (titleEl.offsetHeight > 55) { 
-				        titleEl.style.setProperty('font-size', '1.2rem', 'important');
+				        titleEl.style.setProperty('font-size', '1.1rem', 'important');
 				    }
 				}
     
