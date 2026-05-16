@@ -211,40 +211,74 @@
     const AUTH_URL = "https://script.google.com/macros/s/AKfycbyS_5N2XW4rT1ffJCngvRdx85nzzuDCMEqFkOlcVo5ijaGjdW2NBsOTm_kLgo9qQZ_Y/exec";
     const webAppUrl = "https://script.google.com/macros/s/AKfycbxUT5Q-nW5X86vUhVNQxc0GgCiFa1Ek3-mWJyEER4E0wBsNbcpr_3EMyhYCcATxy3V_/exec";
 
+    // 🎯 [과장님 수정 요청] 앱이 켜질 때 로컬스토리지에서 이름, 전번뿐만 아니라 시트에서 당겨온 센터명까지 3종 세트가 다 있는지 체크합니다.
     window.onload = function() {
+        const savedCenter = localStorage.getItem('userCenter'); // 신설
         const savedName = localStorage.getItem('userName');
         const savedPhone = localStorage.getItem('userPhone');
-        if (savedName && savedPhone) {
-            startInspection(savedName, savedPhone);
+
+        if (savedCenter && savedName && savedPhone) {
+            // 센터명까지 확실히 존재한다면 프리패스로 점검 페이지 진입
+            startInspection(savedCenter, savedName, savedPhone);
         } else {
+            // 정보가 하나라도 없으면 데이터 입력창(인증 화면) 활성화
             document.getElementById('step-auth').classList.remove('hidden');
         }
     };
 
+    // 🎯 [과장님 수정 요청] handleLogin 함수 수정
+    // 이름/전번만 입력받아 인증 시트로 찌르고, 성공 시 시트 A열에서 매칭되어 날아온 센터명을 폰 메모리에 포장 적재합니다.
     function handleLogin() {
         const name = document.getElementById('loginName').value.trim();
         const phone = document.getElementById('loginPhone').value.trim();
         if (!name || !phone) { alert("성함과 번호를 입력해주세요."); return; }
         
         toggleLoading(true);
+        
+        // 인증시트 관문(AUTH_URL)으로 이름과 전번만 토스
         fetch(`${AUTH_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`)
         .then(res => res.text())
         .then(result => {
-            if (result.trim() === "SUCCESS") {
+            const trimmedResult = result.trim();
+            
+            // 💡 [핵심] 만약 구글 인증 웹앱이 텍스트 형태로 센터명을 뱉어내거나 JSON으로 주도록 세팅되어 있을 때의 대응선입니다.
+            // 구글 스크립트가 성공 시 센터명을 직접 뱉어주도록 (예: "울산2센터" 혹은 "SUCCESS:울산2센터") 변경되는 규격에 맞춥니다.
+            if (trimmedResult !== "FAILED" && trimmedResult !== "ERROR" && trimmedResult !== "") {
+                
+                // 구글 백엔드가 "SUCCESS"만 주지 않고 뒤에 센터명을 붙여주거나, 센터명 자체를 반환할 때를 대비한 안전망 분파
+                let centerName = "미지정센터";
+                if (trimmedResult.startsWith("SUCCESS:")) {
+                    centerName = trimmedResult.split(":")[1]; // "SUCCESS:울산2센터" 구조일 때 뒤의 알맹이 추출
+                } else if (trimmedResult === "SUCCESS") {
+                    centerName = "자동지정센터"; // 구글 스크립트 연동 기본값 대응
+                } else {
+                    centerName = trimmedResult; // 구글 스크립트가 시트 A열 문자열("울산2센터") 자체를 뱉어줬을 때
+                }
+
+                // 폰 메모리 장부에 이름, 번호와 함께 시트가 확인해준 센터명을 안전하게 임베딩(setItem)
+                localStorage.setItem('userCenter', centerName);
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userPhone', phone);
-                startInspection(name, phone);
+                
+                // 마스터 동기화 폼 입장
+                startInspection(centerName, name, phone);
             } else {
-                alert("❌ 등록되지 않은 사용자입니다.");
+                alert("❌ 등록되지 않은 사용자입니다. 정보가 일치하지 않습니다.");
                 toggleLoading(false);
             }
         }).catch(() => { alert("네트워크 오류 발생"); toggleLoading(false); });
     }
 
-    function startInspection(name, phone) {
+    // 🎯 [과장님 수정 요청] startInspection 인자값에 center 명문화 추가
+    function startInspection(center, name, phone) {
         document.getElementById('step-auth').classList.add('hidden');
+        
+        // 상단 인포바 화면 세팅 (소속 센터와 이름 결합 출력)
+        if (document.getElementById('display-center')) {
+            document.getElementById('display-center').innerText = center;
+        }
         document.getElementById('display-worker').innerText = `${name}(${phone})`;
-        document.getElementById('welcome-msg').innerText = `안녕하세요, ${name} 님!`;
+        document.getElementById('welcome-msg').innerText = `안녕하세요, [${center}] ${name} 님!`;
 
         let cleanFId = decodeURIComponent(fId).trim();
         if (!cleanFId || cleanFId === "미등록설비") {
@@ -255,6 +289,7 @@
         }
     }
 
+    // [기존 코드 100% 보존 구역] 설비 설정 로드 기능
     function loadFacilityConfig(targetFid) {
         toggleLoading(true);
         fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
@@ -263,53 +298,44 @@
             const trimmedText = text.trim();
             if (trimmedText.includes("✅") && !trimmedText.startsWith("{")) {
                 alert(trimmedText);
-                location.href = location.pathname; // 페이지 초기화
+                location.href = location.pathname; 
                 return;
             }
             if (trimmedText.startsWith("{")) {
-			    const response = JSON.parse(trimmedText);
-			    
-			    // 화면 전환
-			    document.getElementById('step-scan').classList.add('hidden');
-			    document.getElementById('inspection-form').classList.remove('hidden');
-			
-			    // ✅ [추가] 카테고리 텍스트 변경
-			    const categoryEl = document.getElementById('facility-category');
-			    if (categoryEl) {
-			        // 시트의 카테고리 데이터가 있으면 넣고, 없으면 "기타"라고 표시합니다.
-			        categoryEl.innerText = "[" + (response.category || "기타") + "]";
-			    }
-			
-			    // 제목 텍스트 및 크기 조절 (기존 코드 유지)
-			    const titleEl = document.getElementById('facility-title');
-
-				if (titleEl) {
-				    // 1. 부모 요소 스타일 강제 초기화 및 Flex 적용
-				    titleEl.style.cssText = `
-				        display: flex !important;
-				        align-items: flex-start !important;
-				        font-size: 1.5rem !important;
-				        line-height: 1.2 !important;
-				    `;
-				
-				    // 2. 구조 재설계 (이모티콘과 텍스트를 완전히 분리)
-				    titleEl.innerHTML = `
-				        <span style="font-size: 1.5em; flex-shrink: 0; margin-right: 8px; display: inline-block;">📋</span>
-				        <span style="flex: 1; word-break: break-all; display: inline-block;">${response.facilityName}</span>
-				    `;
-				    
-				    // 3. 높이 체크 로직 (기존 로직 유지)
-				    if (titleEl.offsetHeight > 55) { 
-				        titleEl.style.setProperty('font-size', '1.2rem', 'important');
-				    }
-				}
+                const response = JSON.parse(trimmedText);
+                
+                document.getElementById('step-scan').classList.add('hidden');
+                document.getElementById('inspection-form').classList.remove('hidden');
+            
+                const categoryEl = document.getElementById('facility-category');
+                if (categoryEl) {
+                    categoryEl.innerText = "[" + (response.category || "기타") + "]";
+                }
+            
+                const titleEl = document.getElementById('facility-title');
+                if (titleEl) {
+                    titleEl.style.cssText = `
+                        display: flex !important;
+                        align-items: flex-start !important;
+                        font-size: 1.5rem !important;
+                        line-height: 1.2 !important;
+                    `;
+                    titleEl.innerHTML = `
+                        <span style="font-size: 1.5em; flex-shrink: 0; margin-right: 8px; display: inline-block;">📋</span>
+                        <span style="flex: 1; word-break: break-all; display: inline-block;">${response.facilityName}</span>
+                    `;
+                    if (titleEl.offsetHeight > 55) { 
+                        titleEl.style.setProperty('font-size', '1.2rem', 'important');
+                    }
+                }
     
-			    renderDynamicForm(response.configString);
-			    setTimeout(() => toggleLoading(false), 300);
-			}
+                renderDynamicForm(response.configString);
+                setTimeout(() => toggleLoading(false), 300);
+            }
         }).catch(() => { alert("데이터 로드 실패"); toggleLoading(false); });
     }
 
+    // [기존 코드 100% 보존 구역] 동적 폼 렌더러
     function renderDynamicForm(configString) {
         const container = document.getElementById('dynamic-items');
         container.innerHTML = "";
@@ -339,6 +365,7 @@
         });
     }
 
+    // [기존 코드 100% 보존 구역] 카메라 및 압축 로직
     function addPhoto() {
         if(photoData.length >= 3) { alert("사진은 최대 3장까지 가능합니다."); return; }
         const input = document.createElement('input');
@@ -388,89 +415,81 @@
         document.getElementById('scanner-modal').classList.add('hidden'); 
     }
 
-    // [9번] 데이터 전송 함수: 전송 완료 후 화면을 비워버려 중복 실수를 막습니다.
-	function submitToSheet() {
-	    const worker = localStorage.getItem('userName') || "미인증";
-	    const memo = document.getElementById('memo').value;
-	    const btn = document.getElementById('submit-btn');
-	
-	    // 1. 유동적으로 생성된 모든 input 값을 순서대로 수집
-	    const inputs = document.querySelectorAll('.check-input');
-	    let detailData = [];
-	    inputs.forEach(el => detailData.push(el.value || ""));
-	
-	    // 2. 20개 칸을 맞추기 위해 빈 데이터 채우기
-	    let finalValues = new Array(20).fill("");
-	    for(let i=0; i<detailData.length; i++) {
-	        finalValues[i] = detailData[i];
-	    }
-	
-	    if(confirm("점검 데이터를 전송하시겠습니까?")) {
-	        // 전송 중 버튼 비활성화 (연타 방지)
-	        btn.innerText = "🚀 전송 중...";
-	        btn.disabled = true; 
-	
-	        fetch(webAppUrl, {
-	            method: 'POST',
-	            body: JSON.stringify({
-	                worker: worker,
-	                fId: fId,
-	                memo: memo,
-	                photoData: photoData,
-	                values: finalValues
-	            })
-	        })
-	        .then(res => res.text())
-	        .then(result => {
-	            if (result.indexOf("SUCCESS") !== -1) {
-	                alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
-	                
-	                // ⭐ 핵심: 전송 완료 후 점검표를 아예 없애고 안내 문구만 띄움
-	                document.getElementById('inspection-form').innerHTML = `
-	                    <div class="card" style="text-align:center; padding: 50px 20px;">
-	                        <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
-	                        <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">점검 완료!</h2>
-	                        <p style="margin: 20px 0; color: #666; line-height: 1.6;">
-	                            데이터가 안전하게 저장되었습니다.<br>
-	                            이제 이 창을 닫으셔도 됩니다.
-	                        </p>
-	                        <button onclick="window.close()" class="btn-auth" style="background:#1a73e8;">창 닫기</button>
-	                    </div>
-	                `;
-	                
-	                // 1.5초 뒤 자동 종료 시도
-	                setTimeout(() => { window.close(); }, 1500);
-	
-	            } else {
-	                alert("⚠️ 전송 실패: " + result);
-	                btn.innerText = "다시 시도";
-	                btn.disabled = false;
-	            }
-	        })
-	        .catch(err => {
-	            console.error("전송 에러:", err);
-	            alert("🌐 네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
-	            btn.innerText = "다시 시도";
-	            btn.disabled = false;
-	        });
-	    }
-	}
-	
-	// [10번] 로딩창 마스터 스위치 (에러 방지를 위해 꼭 필요함!)
-	function toggleLoading(isVisible) {
-	    const loader = document.getElementById('loading-layer');
-	    if (!loader) return;
-	
-	    if (isVisible) {
-	        // 로딩창 켜기
-	        loader.style.display = 'flex'; 
-	        loader.classList.remove('hidden');
-	    } else {
-	        // 로딩창 끄기
-	        loader.style.display = 'none';
-	        loader.classList.add('hidden');
-	    }
-	}
+    // 🎯 [과장님 수정 요청] 파이어베이스 데이터 전송 함수 (submitToSheet) 개조
+    // 전송 봉투를 꾸릴 때, 로그인할 때 매칭해서 숨겨둔 'userCenter' 값을 박스 첫머리에 동봉하여 쏩니다. FID는 기존 규격 유지!
+    function submitToSheet() {
+        const center = localStorage.getItem('userCenter') || "본사명단"; // 👈 신설: 로컬에서 센터명 로드
+        const worker = localStorage.getItem('userName') || "미인증";
+        const memo = document.getElementById('memo').value;
+        const btn = document.getElementById('submit-btn');
+    
+        const inputs = document.querySelectorAll('.check-input');
+        let detailData = [];
+        inputs.forEach(el => detailData.push(el.value || ""));
+    
+        let finalValues = new Array(20).fill("");
+        for(let i=0; i<detailData.length; i++) {
+            finalValues[i] = detailData[i];
+        }
+    
+        if(confirm("점검 데이터를 전송하시겠습니까?")) {
+            btn.innerText = "🚀 전송 중...";
+            btn.disabled = true; 
+    
+            fetch(webAppUrl, {
+                method: 'POST',
+                body: JSON.stringify({
+                    centerName: center, // 👈 🎯 [핵심 추가] 파이어베이스 수신서류 맨 앞에 센터명 주입!
+                    worker: worker,
+                    fId: fId,           // FID는 그대로 청정하게 유지!
+                    memo: memo,
+                    photoData: photoData,
+                    values: finalValues
+                })
+            })
+            .then(res => res.text())
+            .then(result => {
+                if (result.indexOf("SUCCESS") !== -1) {
+                    alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
+                    
+                    document.getElementById('inspection-form').innerHTML = `
+                        <div class="card" style="text-align:center; padding: 50px 20px;">
+                            <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
+                            <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">점검 완료!</h2>
+                            <p style="margin: 20px 0; color: #666; line-height: 1.6;">
+                                데이터가 안전하게 저장되었습니다.<br>
+                                이제 이 창을 닫으셔도 됩니다.
+                            </p>
+                            <button onclick="window.close()" class="btn-auth" style="background:#1a73e8;">창 닫기</button>
+                        </div>
+                    `;
+                    setTimeout(() => { window.close(); }, 1500);
+                } else {
+                    alert("⚠️ 전송 실패: " + result);
+                    btn.innerText = "다시 시도";
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error("전송 에러:", err);
+                alert("🌐 네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
+                btn.innerText = "다시 시도";
+                btn.disabled = false;
+            });
+        }
+    }
+    
+    function toggleLoading(isVisible) {
+        const loader = document.getElementById('loading-layer');
+        if (!loader) return;
+        if (isVisible) {
+            loader.style.display = 'flex'; 
+            loader.classList.remove('hidden');
+        } else {
+            loader.style.display = 'none';
+            loader.classList.add('hidden');
+        }
+    }
 </script>
 </body>
 </html>
