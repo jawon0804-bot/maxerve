@@ -138,7 +138,7 @@
 		/* 눌렀을 때 반응: 그림자가 줄어들면서 쏙 들어가는 느낌 */
 		.transparent-circle-btn:active, .btn-submit:active, .btn-photo:active, .btn-auth:active {
 		    transform: translateY(10px);
-		    box-shadow: 0 6px 12px rgba(0,0,0,0.25) !important;
+		    box-shadow: 0 6px 12px rgba(0,0,0,0.4) !important;
 		}
     </style>
 </head>
@@ -278,7 +278,7 @@
             document.getElementById('display-center').innerText = center;
         }
         document.getElementById('display-worker').innerText = `${name}(${phone})`;
-        document.getElementById('welcome-msg').innerText = `안녕하세요, [${center}] ${name} 님!`;
+        document.getElementById('welcome-msg').innerText = `안녕하세요!\n[${center}]\n${name} 님!`;
 
         let cleanFId = decodeURIComponent(fId).trim();
         if (!cleanFId || cleanFId === "미등록설비") {
