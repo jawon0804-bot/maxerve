@@ -121,10 +121,10 @@
 		    background: transparent !important; 
 		    
 		    /* 2. 그림자는 원래대로 복구 (약간의 입체감) */
-		    box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important; 
+		    box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; 
 		    
 		    /* 3. 테두리를 아주 연하게 주면 투명 버튼이 더 예뻐 보입니다 */
-		    border: 1px solid rgba(0,0,0,0.05) !important;
+		    border: 1px solid rgba(0,0,0,0.1) !important;
 		    
 		    font-size: 1.8rem; 
 		    display: flex;
@@ -137,7 +137,7 @@
 
 		/* 눌렀을 때 반응: 그림자가 줄어들면서 쏙 들어가는 느낌 */
 		.transparent-circle-btn:active, .btn-submit:active, .btn-photo:active, .btn-auth:active {
-		    transform: translateY(10px);
+		    transform: translateY(5px);
 		    box-shadow: 0 6px 12px rgba(0,0,0,0.4) !important;
 		}
     </style>
