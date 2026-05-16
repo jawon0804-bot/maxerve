@@ -292,7 +292,20 @@
     // [기존 코드 100% 보존 구역] 설비 설정 로드 기능
     function loadFacilityConfig(targetFid) {
         toggleLoading(true);
-        fetch(`${webAppUrl}?fid=${encodeURIComponent(targetFid)}`)
+
+        // 🎯 [과장님 픽스 핵심] 폰 메모리(localStorage)에 문신처럼 박혀있는 정보 삼총사를 실시간으로 꺼냅니다.
+        const savedCenter = localStorage.getItem('userCenter') || "미인증센터";
+        const savedName = localStorage.getItem('userName') || "시스템자동";
+        const savedPhone = localStorage.getItem('userPhone') || "0000";
+
+        // 🎯 [데이터 동봉] 원래 주소 뒤에 &centerName, &worker, &phone을 자석처럼 착 붙여서 보냅니다.
+        const requestUrl = `${webAppUrl}?fid=${encodeURIComponent(targetFid)}` +
+                           `&centerName=${encodeURIComponent(savedCenter)}` +
+                           `&worker=${encodeURIComponent(savedName)}` +
+                           `&phone=${encodeURIComponent(savedPhone)}`;
+
+        // 개조된 직통 주소(requestUrl)로 출발!
+        fetch(requestUrl)
         .then(res => res.text())
         .then(text => {
             const trimmedText = text.trim();
@@ -333,7 +346,7 @@
                 setTimeout(() => toggleLoading(false), 300);
             }
         }).catch(() => { alert("데이터 로드 실패"); toggleLoading(false); });
-    }
+}
 
     // [기존 코드 100% 보존 구역] 동적 폼 렌더러
     function renderDynamicForm(configString) {
