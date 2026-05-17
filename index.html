@@ -154,7 +154,7 @@
 
     <div id="step-scan" class="card hidden text-center py-10">
         <img src="icon.png" class="w-48 mx-auto mb-6">
-        <h2 id="welcome-msg" class="text-xl font-bold mb-2">안녕하세요!</h2>
+        <h2 id="welcome-msg" class="text-xl font-bold mb-4">안녕하세요</h2>
         <p class="text-gray-600 mb-8">준비가 완료되었습니다.<br><b>설비의 태그(NFC/QR)</b>를 <br>
         스캔하여 점검을 시작해 주세요.</p>
         
@@ -177,7 +177,7 @@
             <h1 id="facility-title">점검표 로딩 중...</h1>
             
                 <p style="font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 1.3rem; line-height: 1; margin-bottom: 10px;">🪪</span> 
+                    <span style="font-size: 1.3rem; line-height: 1; margin-bottom: 5px;">🪪</span> 
                     <span>점검자: <span id="display-worker"></span></span>
                 </p>
             <hr class="hr-dotted">
@@ -278,7 +278,7 @@
             document.getElementById('display-center').innerText = center;
         }
         document.getElementById('display-worker').innerText = `${name}(${phone})`;
-        document.getElementById('welcome-msg').innerText = `안녕하세요!\n[${center}]\n${name} 님!`;
+        document.getElementById('welcome-msg').innerText = `[${center}]\n안녕하세요, ${name} 님!`;
 
         let cleanFId = decodeURIComponent(fId).trim();
         if (!cleanFId || cleanFId === "미등록설비") {
@@ -402,7 +402,9 @@
                     const preview = document.createElement('div');
                     preview.id = `photo-${id}`;
                     preview.className = 'preview-box';
-                    preview.innerHTML = `<img src="${data}"><div onclick="this.parentElement.remove(); photoData=photoData.filter(d=>d!='${data}');" style="position:absolute; top:0; right:0; background:red; color:white; width:20px; height:20px; text-align:center; cursor:pointer;">×</div>`;
+                    preview.innerHTML = `<img src="${data}"><div onclick="this.parentElement.remove(); photoData=photoData.filter(d=>d!='${data}');" 
+					                      style="position:absolute; top:0; right:0; background:red; color:white; width:20px; height:20px; 
+										  text-align:center; cursor:pointer;">×</div>`;
                     document.getElementById('photo-preview-container').appendChild(preview);
                 };
                 img.src = event.target.result;
@@ -431,7 +433,7 @@
     // 🎯 [과장님 수정 요청] 파이어베이스 데이터 전송 함수 (submitToSheet) 개조
     // 전송 봉투를 꾸릴 때, 로그인할 때 매칭해서 숨겨둔 'userCenter' 값을 박스 첫머리에 동봉하여 쏩니다. FID는 기존 규격 유지!
     function submitToSheet() {
-        const center = localStorage.getItem('userCenter') || "본사명단"; // 👈 신설: 로컬에서 센터명 로드
+        const center = localStorage.getItem('userCenter') || "미인증센터"; // 👈 신설: 로컬에서 센터명 로드
         const worker = localStorage.getItem('userName') || "미인증";
         const memo = document.getElementById('memo').value;
         const btn = document.getElementById('submit-btn');
