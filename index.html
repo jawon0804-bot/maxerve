@@ -305,6 +305,18 @@
         }
     }
 
+		// 🚀 '...' 순차 노출 자바스크립트 엔진
+		let dotCount = 0;
+		const statusElement = document.querySelector('.status-tag'); // 태그 박스 찾기
+		
+		if (statusElement) {
+		  setInterval(() => {
+		    dotCount = (dotCount + 1) % 4; // 0, 1, 2, 3 무한 반복
+		    const dots = '.'.repeat(dotCount); // 숫자에 맞춰 점 생성
+		    statusElement.innerText = '태그 인식 대기중' + dots;
+		  }, 500); // 0.5초마다 점 개수 변경
+		}
+
     // [기존 코드 100% 보존 구역] 설비 설정 로드 기능
     function loadFacilityConfig(targetFid) {
         toggleLoading(true);
