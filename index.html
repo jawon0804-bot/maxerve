@@ -483,38 +483,45 @@
                 })
             })
             .then(res => res.text())
-            .then(result => {
-                if (result.indexOf("SUCCESS") !== -1) {
-                    alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
-                    
-                    document.getElementById('inspection-form').innerHTML = `
-                        <div class="card" style="text-align:center; padding: 50px 20px;">
-                            <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
-                            <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">점검 완료!</h2>
-                            <p style="margin: 20px 0; color: #666; line-height: 1.6;">
-                                데이터가 안전하게 저장되었습니다.<br>
-                                이제 이 창을 닫으셔도 됩니다.
-                            </p>
-                            <button onclick="window.close()" class="btn-auth" style="background:#1a73e8;">창 닫기</button>
-                        </div>
-                    `;
-                    setTimeout(() => { window.close(); }, 1500);
-                } else {
-                    alert("⚠️ 전송 실패: " + result);
-                    btn.innerText = "다시 시도";
-                    btn.disabled = false;
-                }
-            })
-            .catch(err => {
-                console.error("전송 에러:", err);
-                alert("🌐 네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
-                btn.innerText = "다시 시도";
-                btn.disabled = false;
-            });
-        }
-    }
+			.then(result => {
+			    if (result.indexOf("SUCCESS") !== -1) {
+			        alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
+			        
+			        // 1. [핵심 추가] 주소창에서 ?fId=... 부분을 흔적도 없이 지웁니다.
+			        // 유저가 새로고침을 하거나 뒤로 가기를 해도 fId가 없어져서 중복 전송이 불가능해집니다.
+			        if (history.replaceState) {
+			            history.replaceState(null, document.title, window.location.pathname); 
+			        }
+			        
+			        // 2. 자바스크립트 메모리 내의 fId 변수도 완전히 비워버립니다.
+			        fId = null; 
+			
+			        // 3. 원래 작성하신 멋진 점검 완료 HTML 화면을 띄웁니다.
+			        document.getElementById('inspection-form').innerHTML = `
+			            <div class="card" style="text-align:center; padding: 50px 20px;">
+			                <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
+			                <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">점검 완료!</h2>
+			                <p style="margin: 20px 0; color: #666; line-height: 1.6;">
+			                    데이터가 안전하게 저장되었습니다.<br>
+			                    이제 이 창을 닫으셔도 됩니다.
+			                </p>
+			                <button onclick="window.close()" class="btn-auth" style="background:#1a73e8; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">창 닫기</button>
+			            </div>
+			        `;
+			
+			        // 4. 1.5초 뒤에 창 닫기를 시도합니다.
+			        setTimeout(() => { window.close(); }, 1500);
+			
+			    } else {
+			        alert("⚠️ 전송 실패: " + result);
+			        btn.innerText = "다시 시도";
+			        btn.disabled = false;
+			    }
+			})    
+		}
+	}
     
-    function toggleLoading(isVisible) {
+	function toggleLoading(isVisible) {
         const loader = document.getElementById('loading-layer');
         if (!loader) return;
         if (isVisible) {
