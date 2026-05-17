@@ -453,64 +453,120 @@
     // 🎯 [과장님 수정 요청] 파이어베이스 데이터 전송 함수 (submitToSheet) 개조
     // 전송 봉투를 꾸릴 때, 로그인할 때 매칭해서 숨겨둔 'userCenter' 값을 박스 첫머리에 동봉하여 쏩니다. FID는 기존 규격 유지!
     function submitToSheet() {
-        const center = localStorage.getItem('userCenter') || "미인증센터"; // 👈 신설: 로컬에서 센터명 로드
-        const worker = localStorage.getItem('userName') || "미인증";
-        const memo = document.getElementById('memo').value;
-        const btn = document.getElementById('submit-btn');
-    
-        const inputs = document.querySelectorAll('.check-input');
-        let detailData = [];
-        inputs.forEach(el => detailData.push(el.value || ""));
-    
-        let finalValues = new Array(20).fill("");
-        for(let i=0; i<detailData.length; i++) {
-            finalValues[i] = detailData[i];
-        }
-    
-        if(confirm("점검 데이터를 전송하시겠습니까?")) {
-            btn.innerText = "🚀 전송 중...";
-            btn.disabled = true; 
-    
-            fetch(webAppUrl, {
-                method: 'POST',
-                body: JSON.stringify({
-                    centerName: center, // 👈 🎯 [핵심 추가] 파이어베이스 수신서류 맨 앞에 센터명 주입!
-                    worker: worker,
-                    fId: fId,           // FID는 그대로 청정하게 유지!
-                    memo: memo,
-                    photoData: photoData,
-                    values: finalValues
-                })
-            })
-			.then(res => res.text())
-            .then(result => {
-                if (result.indexOf("SUCCESS") !== -1) {
-                    alert("✅ 점검 결과가 정상적으로 전송되었습니다.");                    
-                    document.getElementById('inspection-form').innerHTML = `
-                        <div class="card" style="text-align:center; padding: 50px 20px;">
-                            <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
-                            <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">점검 완료!</h2>
-                            <p style="margin: 20px 0; color: #666; line-height: 1.6;">
-                                데이터가 안전하게 저장되었습니다.<br>
-                                이제 이 창을 닫으셔도 됩니다.
-                            </p>
-                            <button onclick="window.close()" class="btn-auth" style="background:#1a73e8;">창 닫기</button>
-                        </div>
-                    `;
-                    setTimeout(() => { window.close(); }, 1500);
-                } else {
-                    alert("⚠️ 전송 실패: " + result);
-                    btn.innerText = "다시 시도";
-                    btn.disabled = false;
-                }
-            })		
-            .catch(err => {
-                console.error("전송 에러:", err);
-                alert("🌐 네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
-                btn.innerText = "다시 시도";
-                btn.disabled = false;
-            });
-        }    		
+	    const center = localStorage.getItem('userCenter') || "미인증센터"; 
+	    const worker = localStorage.getItem('userName') || "미인증";
+	    const memo = document.getElementById('memo').value;
+	    const btn = document.getElementById('submit-btn');
+	
+	    const inputs = document.querySelectorAll('.check-input');
+	    let detailData = [];
+	    inputs.forEach(el => detailData.push(el.value || ""));
+	
+	    let finalValues = new Array(20).fill("");
+	    for(let i=0; i<detailData.length; i++) {
+	        finalValues[i] = detailData[i];
+	    }
+	
+	    if(confirm("점검 데이터를 전송하시겠습니까?")) {
+	        btn.innerText = "🚀 전송 중...";
+	        btn.disabled = true; 
+	
+	        fetch(webAppUrl, {
+	            method: 'POST',
+	            body: JSON.stringify({
+	                centerName: center, 
+	                worker: worker,
+	                fId: fId,           
+	                memo: memo,
+	                photoData: photoData,
+	                values: finalValues
+	            })
+	        })
+	        .then(res => res.text())
+	        .then(result => {
+	            if (result.indexOf("SUCCESS") !== -1) {
+	                alert("✅ 점검 결과가 정상적으로 전송되었습니다.");
+	
+	                if (typeof fId !== 'undefined' && fId) {
+	                    localStorage.setItem('completed_form_' + fId, 'true');
+	                }
+	
+	                // 1단계: 수동 클릭 및 자동 타이머가 공통으로 사용할 3초 로딩 이동 함수
+	                window.finishAndGoToScan = function() {
+	                    // 진입 즉시 fId 변수를 비우고 작동 중이던 타이머 파괴
+	                    fId = null; 
+	                    clearTimeout(window.moveTimer);
+	                    clearInterval(window.countdownInterval);
+	                    
+	                    // 최상단에 로딩창을 강제로 켭니다.
+	                    toggleLoading(true); 
+	                    
+	                    // 정확히 3초(3000ms) 동안 로딩창을 유지합니다.
+	                    setTimeout(() => { 
+	                        toggleLoading(false); // 3초 뒤 로딩창 끄기
+	                        
+	                        // 🎯 [숙제 해결 핵심!] 주소창의 ?id=... 파라미터를 새로고침 없이 흔적도 없이 지웁니다.
+	                        // 이 코드가 실행되면 주소창이 그냥 '.../index.html' 깔끔한 상태로 바뀝니다.
+	                        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+	                        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+	                        
+	                        // !important를 적용하여 확실하게 이전 폼을 숨깁니다.
+	                        const inspectForm = document.getElementById('inspection-form');
+	                        if (inspectForm) {
+	                            inspectForm.style.setProperty('display', 'none', 'important');
+	                        }
+	                        
+	                        // 숨겨져 있던 진짜 스캔 화면을 확실하게 띄웁니다!
+	                        const scanPage = document.getElementById('step-scan');
+	                        if (scanPage) {
+	                            scanPage.classList.remove('hidden'); 
+	                            scanPage.style.setProperty('display', 'block', 'important');
+	                        }
+	                    }, 3000); 
+	                };
+	                
+	                // 2단계: 화면에 완료 안내 카드와 [바로 이동하기] 버튼을 함께 띄웁니다.
+	                document.getElementById('inspection-form').innerHTML = `
+	                    <div class="card" style="text-align:center; padding: 50px 20px;">
+	                        <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
+	                        <h2 style="font-size: 1.5rem; color: #34a853; font-weight: bold;">모든 점검 완료!</h2>
+	                        <p style="margin: 20px 0; color: #666; line-height: 1.6;">
+	                            데이터가 서버에 성공적으로 기록되었습니다.<br>
+	                            <strong style="color: #1a73e8;"><span id="auto-timer">3</span>초 후 다음 단계로 자동 이동합니다.</strong>
+	                        </p>
+	                        
+	                        <button type="button" onclick="finishAndGoToScan()" class="btn-auth" style="background:#1a73e8; color:white; border:none; padding:12px 24px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:1rem;">
+	                            바로 이동하기
+	                        </button>
+	                    </div>
+	                `;
+	
+	                // 3단계: 화면의 숫자를 3 -> 2 -> 1 초 단위로 깎아주는 카운트다운 타이머 구동
+	                let timeLeft = 3;
+	                window.countdownInterval = setInterval(() => {
+	                    timeLeft--;
+	                    const timerEl = document.getElementById('auto-timer');
+	                    if (timerEl) timerEl.innerText = timeLeft;
+	                }, 1000);
+	
+	                // 4단계: 유저가 가만히 있어도 3초 뒤에 자동으로 이동 함수를 실행시키는 타이머
+	                window.moveTimer = setTimeout(() => {
+	                    finishAndGoToScan();
+	                }, 3000);
+	
+	            } else {
+	                alert("⚠️ 전송 실패: " + result);
+	                btn.innerText = "다시 시도";
+	                btn.disabled = false;
+	            }
+	        })
+	        .catch(err => {
+	            console.error("전송 에러:", err);
+	            alert("🌐 네트워크 오류가 발생했습니다. 다시 시도해 주세요.");
+	            btn.innerText = "다시 시도";
+	            btn.disabled = false;
+	        });
+	    }
 	}
     
 	function toggleLoading(isVisible) {
