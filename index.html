@@ -31,6 +31,11 @@
             display: flex !important;
         }
 
+		.stop-tag { display: inline-block !important; padding: 4px 10px !important; border-radius: 4px !important;
+			font-size: 0.8rem !important; font-weight: bold !important;background: #e8f0fe !important; 
+			color: var(--primary) !important; margin-bottom: 12px !important; border: 1px solid #d2e3fc !important;                  
+        }
+
         /* [수정] 카테고리 태그 스타일 (과장님이 올려주신 기존 코드) */
 		.status-tag { 
 		    display: inline-block !important; 
@@ -176,7 +181,7 @@
 
     <form id="inspection-form" class="hidden">
         <div class="card" id="form-container">
-            <div id="facility-category" class="status-tag">설비 인식 중...</div>
+            <div id="facility-category" class="stop-tag">설비 인식 중...</div>
             <h1 id="facility-title">점검표 로딩 중...</h1>
             
                 <p style="font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 4px;">
